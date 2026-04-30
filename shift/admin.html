@@ -394,7 +394,7 @@ function renderCO(el){
   const today=new Date();today.setHours(0,0,0,0);
   const todayStr=fmtDate(today);
   const weekEnd=fmtDate(addDays(today,6));
-  const allShifts=shiftsArr().filter(s=>s.date>=todayStr&&s.date<=weekEnd).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
+  const allShifts=shiftsArr().filter(s=>s.date>=todayStr&&s.date<=weekEnd&&!s.confirmed).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
   const pending=allShifts.filter(s=>(checkoutStatuses[`${s.date}_${s.hi}`]||"ng")==="ng").length;
   const alertHtml=pending>0?`<div style="background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);margin-bottom:12px">⚠️ 清掃が未手配の物件が${pending}件あります！</div>`:"";
   // 統計
