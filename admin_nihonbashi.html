@@ -691,8 +691,6 @@ function renderCO(el){
   const allShiftArr=Object.entries(shifts).map(([id,s])=>({...s,id}));
   const allCO=allShiftArr.filter(s=>s.date>=todayStr&&s.date<=weekEnd&&!s.confirmed).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
   const pending=allCO.filter(s=>(coStatuses[`${s.date}_${s.hi}`]||"ng")==="ng").length;
-  const settings=allSettings[curProp]||{};
-  const HOUSES=settings.houses||[{name:curProp==="ohana"?"オハナ":"八広",icon:curProp==="ohana"?"🌸":"🏠",color:curProp==="ohana"?"#FF4081":"#1A237E"}];
   const alertHtml=pending>0?`<div style="background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);margin-bottom:12px">⚠️ 清掃が未手配の物件が${pending}件あります！</div>`:"";
   const statHtml=`<div style="display:flex;gap:8px;margin-bottom:12px">
     <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${allCO.filter(s=>s.date===todayStr).length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">本日CO</div></div>
@@ -707,9 +705,9 @@ function renderCO(el){
     const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
     cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
     groups[date].forEach(s=>{
-      const hName=HOUSES[s.hi]?HOUSES[s.hi].name:(s.hi===0?"オハナ":"八広");
-      const hIcon=HOUSES[s.hi]?HOUSES[s.hi].icon:(curProp==="ohana"?"🌺":"🏠");
-      const hColor=HOUSES[s.hi]?HOUSES[s.hi].color:(curProp==="ohana"?"#E91E8C":"#1565C0");
+      const hName=curProp==="ohana"?"オハナ":"八広";
+      const hIcon=curProp==="ohana"?"🌺":"🏠";
+      const hColor=curProp==="ohana"?"#E91E8C":"#1565C0";
       const key=`${s.date}_${s.hi}`;
       const st=coStatuses[key]||"ng";
       const stMap={
