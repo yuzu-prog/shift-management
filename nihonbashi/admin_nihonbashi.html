@@ -287,6 +287,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <div class="tabs">
   <button class="tab on" id="tab-shifts"   onclick="setTab('shifts')">📅 シフト</button>
   <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 Airbnb</button>
+  <button class="tab"    id="tab-co"       onclick="setTab('co')">📋 CO管理</button>
   <button class="tab"    id="tab-done"     onclick="setTab('done')">✅ 確定済み</button>
   <button class="tab"    id="tab-remind"   onclick="setTab('remind')">🔔 週間</button>
   <button class="tab"    id="tab-mremind"  onclick="setTab('mremind')">📅 月次</button>
@@ -340,6 +341,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <div class="bnav">
   <button class="nb on" id="nb-shifts"   onclick="setTab('shifts')">  <span class="nb-icon">🏠</span><span class="nb-lbl">棟一覧</span></button>
   <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">Airbnb</span></button>
+  <button class="nb"    id="nb-co"       onclick="setTab('co')">      <span class="nb-icon">📋</span><span class="nb-lbl">CO管理</span></button>
   <button class="nb"    id="nb-done"     onclick="setTab('done')">    <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
   <button class="nb"    id="nb-remind"   onclick="setTab('remind')">  <span class="nb-icon">🔔</span><span class="nb-lbl">週間</span></button>
   <button class="nb"    id="nb-mremind"  onclick="setTab('mremind')"> <span class="nb-icon">📅</span><span class="nb-lbl">月次</span></button>
@@ -395,6 +397,7 @@ function getCurShifts()  { return allShifts[curProp]||{}; }
 function getCurSettings(){ return allSettings[curProp]||{staff:[],staffColors:[]}; }
 
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
+let checkoutStatuses={};
 let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReadyCnt=0;
 
@@ -418,6 +421,11 @@ PROPERTY_KEYS.forEach(prop=>{
       // 初回のみデフォルトスタッフをFirebaseに書き込む
       set(ref(db,`${prop}/settings`), PROPERTY_DEFAULT_STAFF[prop]);
     }
+    render();
+  });
+  onValue(ref(db,`${prop}/checkoutStatuses`), snap=>{
+    if(!checkoutStatuses[prop]) checkoutStatuses[prop]={};
+    checkoutStatuses[prop]=snap.val()||{};
     render();
   });
 });
@@ -488,7 +496,7 @@ window.switchProp=function(prop){
 // ── TAB ──
 function setTab(t){
   tab=t;
-  ["shifts","ical","done","remind","mremind","settings"].forEach(x=>{
+  ["shifts","ical","co","done","remind","mremind","settings"].forEach(x=>{
     const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);
     if(te)te.classList.toggle("on",x===t);
     if(ne)ne.classList.toggle("on",x===t);
@@ -517,7 +525,7 @@ function getMonths(conf){
 }
 function renderMbar(conf){
   const bar=document.getElementById("mbar");
-  if(tab==="ical"||tab==="settings"){bar.classList.add("hidden");return}
+  if(tab==="ical"||tab==="settings"||tab==="co"){bar.classList.add("hidden");return}
   bar.classList.remove("hidden");
   const ms=getMonths(conf);
   if(ms.length&&!ms.includes(selYM))selYM=ms[0];
@@ -556,6 +564,7 @@ function render(){
     return;
   }
   if(tab==="ical"){renderMbar(false);renderIcal(el);return}
+  if(tab==="co"){document.getElementById("mbar").classList.add("hidden");renderCO(el);return}
   if(tab==="settings"){document.getElementById("mbar").classList.add("hidden");renderSettings(el);return}
   if(tab==="remind"){document.getElementById("mbar").classList.add("hidden");renderRemind(el);return}
   if(tab==="mremind"){document.getElementById("mbar").classList.add("hidden");renderMonthlyRemind(el);return}
@@ -621,7 +630,7 @@ function renderMonthlyRemind(el){
         txt+="\n";
       });
     }
-    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_ohana.html`;
+    txt+=`\nシフトアプリ: https://tiny-sawine-5a9d7e.netlify.app/staff.html`;
     return txt.trim();
   }
 
@@ -671,6 +680,73 @@ window.copyMonthlyLineText=function(){
   });
 };
 
+
+function renderCO(el){
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=fmtDate(today);
+  const weekEnd=fmtDate(addDays(today,6));
+  const WD=["日","月","火","水","木","金","土"];
+  const coStatuses=checkoutStatuses[curProp]||{};
+  const shifts=allShifts[curProp]||{};
+  const allShiftArr=Object.entries(shifts).map(([id,s])=>({...s,id}));
+  const allCO=allShiftArr.filter(s=>s.date>=todayStr&&s.date<=weekEnd&&!s.confirmed).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
+  const pending=allCO.filter(s=>(coStatuses[`${s.date}_${s.hi}`]||"ng")==="ng").length;
+  const settings=allSettings[curProp]||{};
+  const HOUSES=settings.houses||[{name:curProp==="ohana"?"オハナ":"八広",icon:curProp==="ohana"?"🌸":"🏠",color:curProp==="ohana"?"#FF4081":"#1A237E"}];
+  const alertHtml=pending>0?`<div style="background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);margin-bottom:12px">⚠️ 清掃が未手配の物件が${pending}件あります！</div>`:"";
+  const statHtml=`<div style="display:flex;gap:8px;margin-bottom:12px">
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${allCO.filter(s=>s.date===todayStr).length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">本日CO</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--go)">${allCO.filter(s=>(coStatuses[s.date+"_"+s.hi]||"ng")==="ok").length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">清掃確認済</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${pending}</div><div style="font-size:10px;color:var(--sub);font-weight:700">要手配</div></div>
+  </div>`;
+  const groups={};
+  allCO.forEach(s=>{if(!groups[s.date])groups[s.date]=[];groups[s.date].push(s)});
+  let cardsHtml="";
+  Object.keys(groups).sort().forEach(date=>{
+    const d=new Date(date+"T00:00:00");
+    const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
+    groups[date].forEach(s=>{
+      const hName=s.hi===0?(curProp==="ohana"?"オハナ":"八広"):"不明";
+      const hIcon=curProp==="ohana"?"🌸":"🏠";
+      const hColor=curProp==="ohana"?"#FF4081":"#1A237E";
+      const key=`${s.date}_${s.hi}`;
+      const st=coStatuses[key]||"ng";
+      const stMap={
+        ok:{dot:"var(--go)",txt:"var(--go)",lbl:"清掃確認済 ✅",btnLbl:"完了済み",btnBg:"#EBEBEB",btnColor:"var(--sub)"},
+        warn:{dot:"var(--maybe)",txt:"var(--maybe)",lbl:"手配済・未確認 ⏳",btnLbl:"確認する",btnBg:"var(--maybe)",btnColor:"#fff"},
+        ng:{dot:"var(--ng)",txt:"var(--ng)",lbl:"未手配 ❌",btnLbl:"今すぐ手配",btnBg:"var(--ng)",btnColor:"#fff"},
+      };
+      const sm=stMap[st]||stMap.ng;
+      cardsHtml+=`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:18px">${hIcon}</span>
+          <span style="font-size:14px;font-weight:900;flex:1">${hName}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--sub);background:#F3F3F3;padding:3px 9px;border-radius:8px">${s.te||"11:00"} CO</span>
+        </div>
+        <div style="padding:9px 13px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700">
+            <span style="width:8px;height:8px;border-radius:50%;background:${sm.dot};display:inline-block"></span>
+            <span style="color:${sm.txt}">${sm.lbl}</span>
+          </div>
+          <button onclick="cycleCOStatus('${curProp}','${key}')" style="border:none;border-radius:20px;font-size:11px;font-weight:800;font-family:inherit;padding:6px 14px;cursor:pointer;background:${sm.btnBg};color:${sm.btnColor}">${sm.btnLbl}</button>
+        </div>
+      </div>`;
+    });
+  });
+  if(!allCO.length) cardsHtml=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-size:14px;font-weight:700">今週のチェックアウトなし</div></div>`;
+  el.innerHTML=alertHtml+statHtml+cardsHtml;
+}
+
+window.cycleCOStatus=function(prop,key){
+  const cur=(checkoutStatuses[prop]||{})[key]||"ng";
+  const next=cur==="ng"?"warn":cur==="warn"?"ok":"ng";
+  setSyncStatus(false);
+  set(ref(db,`${prop}/checkoutStatuses/${key}`),next).then(()=>{setSyncStatus(true);toast(next==="ok"?"✅ 清掃確認済":next==="warn"?"⏳ 手配済":"❌ 未手配に戻しました")});
+};
+
+function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
 
 function renderRemind(el){
   const today=new Date();
