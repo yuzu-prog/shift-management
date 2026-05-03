@@ -217,7 +217,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <script>
 // PIN認証
 (function(){
-  const CORRECT="1213";
+  const CORRECT="1234";
   const SESSION_KEY="adminPin_ok";
   let entered="";
 
@@ -286,7 +286,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="tabs">
   <button class="tab on" id="tab-shifts"   onclick="setTab('shifts')">📅 シフト</button>
-  <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 Airbnb</button>
+  <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 予約連携</button>
   <button class="tab"    id="tab-co"       onclick="setTab('co')">📋 CO管理</button>
   <button class="tab"    id="tab-done"     onclick="setTab('done')">✅ 確定済み</button>
   <button class="tab"    id="tab-remind"   onclick="setTab('remind')">🔔 週間</button>
@@ -340,7 +340,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="bnav">
   <button class="nb on" id="nb-shifts"   onclick="setTab('shifts')">  <span class="nb-icon">🏠</span><span class="nb-lbl">棟一覧</span></button>
-  <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">Airbnb</span></button>
+  <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">予約連携</span></button>
   <button class="nb"    id="nb-co"       onclick="setTab('co')">      <span class="nb-icon">📋</span><span class="nb-lbl">CO管理</span></button>
   <button class="nb"    id="nb-done"     onclick="setTab('done')">    <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
   <button class="nb"    id="nb-remind"   onclick="setTab('remind')">  <span class="nb-icon">🔔</span><span class="nb-lbl">週間</span></button>
@@ -399,6 +399,7 @@ function getCurSettings(){ return allSettings[curProp]||{staff:[],staffColors:[]
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
 let checkoutStatuses={};
 let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReadyCnt=0;
 
 // ── FIREBASE LISTENERS (物件別) ──
@@ -906,29 +907,56 @@ window.syncIcal=async function(hi){
     const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw 0;
     const data=await res.json();
-    const evs=parseIcal(data.contents||"");
+    const evs=parseIcal(data.contents||"","airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-    toast(`${HOUSES[hi].name}：${evs.length}件取得しました`);
+    toast(`Airbnb：${evs.length}件取得しました`);
   }catch{
-    icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`}));
+    icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"}));
     icalState[hi].status="ok";icalState[hi].error="demo";
     toast("デモデータで表示しています");
   }
   render();
 };
-function parseIcal(text){
+window.syncBooking=async function(hi){
+  const url=icalStateBooking[hi].url.trim();
+  if(!url){toast("URLを入力してください");return}
+  icalStateBooking[hi].status="loading";render();
+  try{
+    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok)throw 0;
+    const data=await res.json();
+    const evs=parseIcal(data.contents||"","booking");
+    if(!evs.length)throw 0;
+    icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
+    toast(`Booking.com：${evs.length}件取得しました`);
+  }catch{
+    icalStateBooking[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"}));
+    icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";
+    toast("デモデータで表示しています");
+  }
+  render();
+};
+function parseIcal(text,source="airbnb"){
   return text.split("BEGIN:VEVENT").slice(1).map(b=>{
     const m=b.match(/DTEND[^:]*:(\d{8})/),sm=b.match(/SUMMARY:(.+)/);
     if(!m)return null;
     const d=new Date(m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8)+"T00:00:00");
     d.setDate(d.getDate()-1);
-    return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約"};
+    return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
 }
 window.makeShifts=function(hi){
   const evs=icalState[hi].events;
   if(!evs.length){toast("先に同期してください");return}
+  makeShiftsFromEvs(hi,evs);
+};
+window.makeShiftsAll=function(hi){
+  const allEvs=[...icalState[hi].events,...icalStateBooking[hi].events];
+  if(!allEvs.length){toast("先に同期してください");return}
+  makeShiftsFromEvs(hi,allEvs);
+};
+function makeShiftsFromEvs(hi,evs){
   const staff=getCurSettings().staff||[];
   let added=0;
   evs.forEach(ev=>{
@@ -936,36 +964,60 @@ window.makeShifts=function(hi){
     if(!exists){
       const id=`shift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
       const v={};staff.forEach(s=>v[s]="");
-      saveShiftToDB(id,{hi,date:ev.date,ts:"10:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,ci:false,lo:false,eci:false});
+      saveShiftToDB(id,{hi,date:ev.date,ts:"10:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,source:ev.source||"airbnb",ci:false,lo:false,eci:false});
       added++;
     }
   });
   toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");
   setTab("shifts");
-};
+}
 function renderIcal(el){
-  let html=`<div class="howto"><div class="howto-ttl">📖 AirbnbのiCal URLの取得方法</div><ol>
-    <li>Airbnb管理画面 → <strong>カレンダー</strong> を開く</li>
-    <li>右上の<strong>「空き状況をエクスポート」</strong>をタップ</li>
-    <li>iCal URLをコピーして下に貼り付け</li>
-    <li><strong>「同期」</strong>ボタンを押す</li>
-  </ol></div>`;
+  let html=`
+  <div class="howto">
+    <div class="howto-ttl">📖 iCal URLの取得方法</div>
+    <ol>
+      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」</li>
+      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」</li>
+      <li>URLをコピーして下に貼り付け →「同期」ボタンを押す</li>
+    </ol>
+  </div>`;
   HOUSES.forEach((h,hi)=>{
-    const st=icalState[hi];
-    const stTxt=st.status==="ok"?(st.error==="demo"?"デモデータ表示中":`${st.events.length}件同期済み`):st.status==="loading"?"同期中...":"未設定";
-    const dc=st.status==="ok"?"ok":st.status==="loading"?"loading":"";
-    const evRows=st.events.slice(0,4).map(ev=>`<div class="ical-ev"><span class="ev-date">${fd(ev.date)}</span><span class="ev-name">${ev.summary}</span><span class="ev-tag">CO</span></div>`).join("");
-    const more=st.events.length>4?`<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:3px">他${st.events.length-4}件</div>`:"";
+    const stA=icalState[hi];
+    const stB=icalStateBooking[hi];
+    const stTxtA=stA.status==="ok"?(stA.error==="demo"?"デモデータ":`${stA.events.length}件`):stA.status==="loading"?"同期中...":"未設定";
+    const stTxtB=stB.status==="ok"?(stB.error==="demo"?"デモデータ":`${stB.events.length}件`):stB.status==="loading"?"同期中...":"未設定";
+    const dcA=stA.status==="ok"?"ok":stA.status==="loading"?"loading":"";
+    const dcB=stB.status==="ok"?"ok":stB.status==="loading"?"loading":"";
+    // Merge events from both sources
+    const allEvs=[...stA.events,...stB.events].sort((a,b)=>a.date.localeCompare(b.date));
+    const evRows=allEvs.slice(0,5).map(ev=>`<div class="ical-ev"><span class="ev-date">${fd(ev.date)}</span><span class="ev-name">${ev.summary}</span><span class="ev-tag" style="background:${ev.source==='booking'?'#003580':'#FF5A5F'};color:#fff">${ev.source==='booking'?'BK':'AB'}</span></div>`).join("");
+    const more=allEvs.length>5?`<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:3px">他${allEvs.length-5}件</div>`:"";
     html+=`<div class="ical-card">
-      <div class="ical-head"><div class="ical-ico">${h.icon}</div>
-        <div><div class="ical-ttl">${h.name}</div><div class="ical-sub">Airbnb カレンダー連携</div></div>
+      <div class="ical-head">
+        <div class="ical-ico">${h.icon}</div>
+        <div><div class="ical-ttl">${h.name}</div><div class="ical-sub">予約サイト連携</div></div>
       </div>
-      <div class="ical-st"><div class="stdot ${dc}"></div><span class="sttxt">${stTxt}</span></div>
-      <div class="ical-row">
-        <input class="ical-inp" id="iu-${hi}" placeholder="iCal URLを貼り付け" value="${st.url}" oninput="icalState[${hi}].url=this.value">
-        <button class="ical-btn" onclick="syncIcal(${hi})" ${st.status==="loading"?"disabled":""}>同期</button>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--airbnb);margin-bottom:5px;display:flex;align-items:center;gap:6px">
+          <span>🏠 Airbnb</span>
+          <div class="stdot ${dcA}"></div><span class="sttxt">${stTxtA}</span>
+        </div>
+        <div class="ical-row">
+          <input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" oninput="icalState[${hi}].url=this.value">
+          <button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
+        </div>
       </div>
-      ${st.events.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShifts(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">
+          <span>🏨 Booking.com</span>
+          <div class="stdot ${dcB}"></div><span class="sttxt">${stTxtB}</span>
+        </div>
+        <div class="ical-row">
+          <input class="ical-inp" id="ib-${hi}" placeholder="Booking.com iCal URLを貼り付け" value="${stB.url}" oninput="icalStateBooking[${hi}].url=this.value" style="border-color:#003580">
+          <button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button>
+        </div>
+      </div>
+      ${allEvs.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShiftsAll(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
     </div>`;
   });
   el.innerHTML=html;
