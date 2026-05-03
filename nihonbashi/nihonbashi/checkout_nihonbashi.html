@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>チェックアウト管理 | nihonbashi</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;
+  --go:#00956A;--go-bg:#E0F5EE;
+  --ng:#D42B22;--ng-bg:#FDECEA;
+  --maybe:#D08000;--maybe-bg:#FEF3C7;
+  --airbnb:#FF5A5F;
+  --r:16px;--sh:0 2px 14px rgba(0,0,0,.07);
+  --ohana:#E91E8C;--yahiro:#1565C0;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:90px}
+
+/* HEADER */
+.hdr{background:var(--ink);padding:14px 16px 12px;position:sticky;top:0;z-index:100}
+.hdr-row{display:flex;align-items:center;justify-content:space-between}
+.hdr h1{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:7px}
+.ab-dot{width:8px;height:8px;border-radius:50%;background:var(--airbnb)}
+.back-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.sync-row{display:flex;align-items:center;gap:5px;margin-top:5px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#4CAF50}
+.sync-dot.syncing{background:#FFB300;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-txt{font-size:10px;color:rgba(255,255,255,.55);font-weight:700}
+
+/* PROP SWITCHER */
+.prop-switcher{display:flex;background:var(--card);border-bottom:1px solid #EBEBEB;position:sticky;top:62px;z-index:90}
+.prop-btn{flex:1;border:none;background:none;padding:12px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--sub);border-bottom:3px solid transparent;transition:all .2s}
+.prop-btn.ohana.on{color:var(--ohana);border-bottom-color:var(--ohana)}
+.prop-btn.yahiro.on{color:var(--yahiro);border-bottom-color:var(--yahiro)}
+
+/* WEEK STRIP */
+.week-wrap{background:var(--card);border-bottom:1px solid #EBEBEB;padding:10px 14px 12px}
+.week-month{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+.today-btn{background:var(--airbnb);color:#fff;border:none;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+.week-strip{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.week-strip::-webkit-scrollbar{display:none}
+.day-pill{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 9px;border-radius:12px;cursor:pointer;min-width:42px;border:1.5px solid transparent;transition:all .18s;flex-shrink:0}
+.day-pill.has-co{border-color:var(--airbnb)}
+.day-pill.active-ohana{background:var(--ohana);border-color:var(--ohana)}
+.day-pill.active-yahiro{background:var(--yahiro);border-color:var(--yahiro)}
+.day-pill.is-today:not(.active-ohana):not(.active-yahiro){background:#F3F3F3}
+.day-name{font-size:10px;color:var(--sub);font-weight:700}
+.day-pill.active-ohana .day-name,.day-pill.active-ohana .day-num,
+.day-pill.active-yahiro .day-name,.day-pill.active-yahiro .day-num{color:#fff}
+.day-num{font-size:16px;font-weight:900;color:var(--ink)}
+.day-dot{width:5px;height:5px;border-radius:50%;background:var(--airbnb)}
+.day-pill.active-ohana .day-dot,.day-pill.active-yahiro .day-dot{background:#fff}
+
+/* STATS */
+.stats-row{display:flex;gap:8px;padding:12px 14px 4px}
+.stat-card{flex:1;background:var(--card);border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)}
+.stat-num{font-size:24px;font-weight:900}
+.stat-num.red{color:var(--ng)}
+.stat-num.green{color:var(--go)}
+.stat-num.gold{color:var(--maybe)}
+.stat-lbl{font-size:10px;color:var(--sub);font-weight:700;margin-top:2px}
+
+/* ALERT */
+.alert-bar{margin:8px 14px 0;background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);display:flex;align-items:center;gap:7px}
+
+/* TABS */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid #EBEBEB;margin-top:8px}
+.tab{flex:1;border:none;background:none;padding:10px 2px;font-size:11px;font-weight:700;font-family:inherit;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* SECTION LABEL */
+.sec-lbl{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;padding:14px 14px 6px;display:flex;align-items:center;gap:8px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:#E0E0E0}
+
+/* CHECKOUT CARD */
+.co-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin:0 14px 10px;overflow:hidden;animation:slideIn .25s ease both}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.co-card-hdr{display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #F0F0F0}
+.co-prop{font-size:14px;font-weight:900;flex:1}
+.co-time{font-size:12px;font-weight:700;color:var(--sub);background:#F3F3F3;padding:3px 9px;border-radius:8px}
+.co-body{display:flex;align-items:center;gap:11px;padding:10px 13px}
+.guest-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.guest-name{font-size:13px;font-weight:800}
+.guest-meta{font-size:11px;color:var(--sub);display:flex;gap:10px;margin-top:2px}
+.co-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:#FAFAFA;border-top:1px solid #F0F0F0}
+.cleaning-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
+.st-dot{width:8px;height:8px;border-radius:50%}
+.action-btn{border:none;border-radius:20px;font-size:11px;font-weight:800;font-family:inherit;padding:6px 14px;cursor:pointer}
+.btn-arrange{background:var(--ng);color:#fff}
+.btn-confirm{background:var(--maybe);color:#fff}
+.btn-done{background:#EBEBEB;color:var(--sub)}
+
+/* SHIFT LINK */
+.shift-link-card{background:linear-gradient(135deg,#1A1A1E,#2a2a35);border-radius:var(--r);margin:0 14px 10px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none;box-shadow:var(--sh)}
+.shift-link-ico{width:40px;height:40px;border-radius:12px;background:var(--airbnb);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.shift-link-ttl{font-size:13px;font-weight:900;color:#fff}
+.shift-link-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
+.shift-link-arr{font-size:16px;color:rgba(255,255,255,.4)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--sub)}
+.empty-ico{font-size:36px;margin-bottom:10px}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid #EBEBEB;display:flex;padding:7px 0 13px;z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--sub);font-size:10px;font-weight:700}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 36px;width:100%;max-width:460px;animation:modalUp .28s ease}
+@keyframes modalUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.m-handle{width:34px;height:4px;background:#DDD;border-radius:2px;margin:0 auto 14px}
+.m-title{font-size:16px;font-weight:900;margin-bottom:4px}
+.m-sub{font-size:12px;color:var(--sub);margin-bottom:16px}
+.m-prop-info{background:#F8F8F8;border-radius:12px;padding:12px;margin-bottom:14px}
+.m-prop-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.m-prop-row:last-child{margin-bottom:0}
+.m-prop-lbl{font-size:11px;color:var(--sub);font-weight:700;min-width:80px}
+.m-prop-val{font-size:13px;font-weight:800}
+.m-status-row{display:flex;gap:8px;margin-bottom:14px}
+.m-status-btn{flex:1;border:2px solid #E0E0E0;background:#FAFAFA;border-radius:12px;padding:10px 5px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;text-align:center;line-height:1.4;color:var(--sub);transition:all .15s}
+.m-status-btn.ok.on{background:var(--go-bg);border-color:var(--go);color:var(--go)}
+.m-status-btn.warn.on{background:var(--maybe-bg);border-color:var(--maybe);color:var(--maybe)}
+.m-status-btn.ng.on{background:var(--ng-bg);border-color:var(--ng);color:var(--ng)}
+.m-save{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:6px}
+.m-cancel{width:100%;background:#F3F3F3;color:var(--sub);border:none;border-radius:12px;padding:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px}
+
+/* TOAST */
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;border-radius:22px;padding:9px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-row">
+    <h1><span class="ab-dot"></span>チェックアウト管理</h1>
+    <a href="https://yuzu-prog.github.io/shift-management/nihonbashi/nihonbashi/admin_nihonbashi.html" class="back-btn">← シフト管理</a>
+  </div>
+  <div class="sync-row">
+    <div class="sync-dot" id="syncDot"></div>
+    <span class="sync-txt" id="syncTxt">接続中...</span>
+  </div>
+</div>
+
+<!-- PROP SWITCHER -->
+<div class="prop-switcher">
+  <button class="prop-btn ohana on" id="propBtn-ohana" onclick="switchProp('ohana')">🌺 オハナ</button>
+  <button class="prop-btn yahiro" id="propBtn-yahiro" onclick="switchProp('yahiro')">🏠 八広</button>
+</div>
+
+<!-- WEEK STRIP -->
+<div class="week-wrap">
+  <div class="week-month">
+    <span id="monthLabel"></span>
+    <button class="today-btn" onclick="goToday()">今日</button>
+  </div>
+  <div class="week-strip" id="weekStrip"></div>
+</div>
+
+<!-- STATS -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-num red" id="statCO">—</div><div class="stat-lbl">本日CO</div></div>
+  <div class="stat-card"><div class="stat-num gold" id="statTmr">—</div><div class="stat-lbl">明日CO</div></div>
+  <div class="stat-card"><div class="stat-num green" id="statOk">—</div><div class="stat-lbl">清掃確認済</div></div>
+  <div class="stat-card"><div class="stat-num red" id="statPend">—</div><div class="stat-lbl">要手配</div></div>
+</div>
+
+<!-- ALERT -->
+<div class="alert-bar" id="alertBar" style="display:none">⚠️ 清掃が未手配の物件があります！</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" id="tab-today"    onclick="setTabView('today',this)">本日</button>
+  <button class="tab"    id="tab-tomorrow" onclick="setTabView('tomorrow',this)">明日</button>
+  <button class="tab"    id="tab-week"     onclick="setTabView('week',this)">今週</button>
+  <button class="tab"    id="tab-all"      onclick="setTabView('all',this)">すべて</button>
+</div>
+
+<!-- MAIN -->
+<div id="cardArea"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div class="m-title" id="modalPropName"></div>
+    <div class="m-sub" id="modalDate"></div>
+    <div class="m-prop-info" id="modalPropInfo"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">清掃ステータスを更新</div>
+    <div class="m-status-row">
+      <button class="m-status-btn ng" id="mBtnNg" onclick="pickStatus('ng')">❌<br>未手配</button>
+      <button class="m-status-btn warn" id="mBtnWarn" onclick="pickStatus('warn')">⏳<br>手配済<br>未確認</button>
+      <button class="m-status-btn ok" id="mBtnOk" onclick="pickStatus('ok')">✅<br>清掃<br>確認済</button>
+    </div>
+    <a href="https://yuzu-prog.github.io/shift-management/nihonbashi/nihonbashi/admin_nihonbashi.html" style="display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1A1A1E,#2a2a35);border-radius:12px;padding:12px 14px;margin-bottom:14px;text-decoration:none">
+      <div style="width:36px;height:36px;border-radius:10px;background:var(--airbnb);display:flex;align-items:center;justify-content:center;font-size:16px">📋</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:900;color:#fff">清掃シフト管理を開く</div><div style="font-size:10px;color:rgba(255,255,255,.5);margin-top:1px">スタッフへの依頼はこちら</div></div>
+      <span style="font-size:16px;color:rgba(255,255,255,.4)">›</span>
+    </a>
+    <button class="m-save" onclick="saveStatus()">保存する</button>
+    <button class="m-cancel" onclick="closeModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/nihonbashi/nihonbashi/admin_nihonbashi.html'"><span style="font-size:20px">🏠</span>シフト</button>
+  <button class="nb" style="color:var(--ink)"><span style="font-size:20px">📅</span>CO管理</button>
+  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/nihonbashi/nihonbashi/staff_ohana.html'"><span style="font-size:20px">👤</span>スタッフ</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCL2iZohtlsdDzv4f-VcZ3zNpKFbqSaiSw",
+  authDomain: "nihonbashi-745dc.firebaseapp.com",
+  databaseURL: "https://nihonbashi-745dc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nihonbashi-745dc",
+  storageBucket: "nihonbashi-745dc.firebasestorage.app",
+  messagingSenderId: "1003341912889",
+  appId: "1:1003341912889:web:6fdfa04ae0173d1783e6e8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── CONSTANTS ──
+const PROPS = {
+  ohana:  { name:"オハナ", icon:"🌺", color:"#E91E8C" },
+  yahiro: { name:"八広",   icon:"🏠", color:"#1565C0" },
+};
+const WD = ["日","月","火","水","木","金","土"];
+const GUEST_EMOJIS = ["👩","👨","🧑","👩‍💼","👨‍💼","🧔","👩‍🦰","👱"];
+const SAMPLE_GUESTS = ["田中さん","浜辺さん","佐久間さん","高柳さん","金子さん","中澤さん","オーナー"];
+
+// ── STATE ──
+let allShifts = { ohana:{}, yahiro:{} };
+let allSettings = { ohana:{}, yahiro:{} };
+let checkoutStatuses = { ohana:{}, yahiro:{} };
+let curProp = "ohana";
+let currentTabView = "today";
+let selectedDate = fmtDate(new Date());
+let modalTargetKey = null, modalTargetProp = null, modalPickedStatus = null;
+let dbReady = false;
+
+// ── FIREBASE ──
+["ohana","yahiro"].forEach(prop => {
+  onValue(ref(db, `${prop}/shifts`), snap => {
+    allShifts[prop] = snap.val() || {};
+    if (dbReady) render();
+  });
+  onValue(ref(db, `${prop}/settings`), snap => {
+    if (snap.val()) allSettings[prop] = snap.val();
+    if (!dbReady) { dbReady = true; setSyncStatus(true); initUI(); }
+    else render();
+  });
+  onValue(ref(db, `${prop}/checkoutStatuses`), snap => {
+    checkoutStatuses[prop] = snap.val() || {};
+    if (dbReady) render();
+  });
+});
+
+function setSyncStatus(ok) {
+  const dot = document.getElementById("syncDot");
+  const txt = document.getElementById("syncTxt");
+  if (ok) { dot.classList.remove("syncing"); txt.textContent = "同期済み"; }
+  else { dot.classList.add("syncing"); txt.textContent = "保存中..."; }
+}
+
+// ── UTILS ──
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+// ── GET CHECKOUTS ──
+function getCheckouts(prop) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const shifts = allShifts[prop] || {};
+  const statuses = checkoutStatuses[prop] || {};
+  const list = [];
+
+  Object.entries(shifts).forEach(([id, s]) => {
+    if (!s || !s.date || s.confirmed) return;
+    const statusKey = `${s.date}_${s.hi}`;
+    list.push({
+      id: statusKey,
+      prop,
+      date: s.date,
+      time: s.te || "11:00",
+      guest: s.guestName || SAMPLE_GUESTS[Math.abs(s.date.charCodeAt(8)) % SAMPLE_GUESTS.length],
+      emoji: GUEST_EMOJIS[Math.abs(s.date.charCodeAt(9)) % GUEST_EMOJIS.length],
+      nights: 2 + (parseInt(s.date.slice(-2)) % 4),
+      cleaning: statuses[statusKey] || "ng",
+      fromAirbnb: s.fromAirbnb || false,
+    });
+  });
+
+  return list.sort((a,b) => a.date.localeCompare(b.date));
+}
+
+// ── PROP SWITCH ──
+window.switchProp = function(prop) {
+  curProp = prop;
+  document.querySelectorAll('.prop-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById(`propBtn-${prop}`).classList.add('on');
+  selectedDate = fmtDate(new Date());
+  buildWeekStrip();
+  render();
+};
+
+// ── INIT ──
+function initUI() {
+  buildWeekStrip();
+  render();
+}
+
+// ── WEEK STRIP ──
+function buildWeekStrip() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const checkouts = getCheckouts(curProp);
+  const strip = document.getElementById("weekStrip");
+  const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
+  document.getElementById("monthLabel").textContent = `${today.getFullYear()}年 ${months[today.getMonth()]}`;
+  let html = "";
+  for (let i = -1; i <= 8; i++) {
+    const d = addDays(today, i);
+    const ds = fmtDate(d);
+    const hasCO = checkouts.some(c => c.date === ds);
+    const isToday = i === 0;
+    const isActive = ds === selectedDate;
+    const activeClass = isActive ? `active-${curProp}` : "";
+    const cls = `day-pill${hasCO?" has-co":""}${isActive?" "+activeClass:""}${isToday&&!isActive?" is-today":""}`;
+    html += `<div class="${cls}" onclick="selectDay('${ds}')">
+      <span class="day-name">${WD[d.getDay()]}</span>
+      <span class="day-num">${d.getDate()}</span>
+      ${hasCO ? `<span class="day-dot"></span>` : `<span style="width:5px;height:5px"></span>`}
+    </div>`;
+  }
+  strip.innerHTML = html;
+}
+
+window.selectDay = function(ds) {
+  selectedDate = ds;
+  buildWeekStrip();
+  renderCards(getCheckouts(curProp).filter(c => c.date === ds));
+};
+
+window.goToday = function() {
+  selectedDate = fmtDate(new Date());
+  buildWeekStrip();
+  setTabView('today', document.getElementById('tab-today'));
+};
+
+// ── TABS ──
+window.setTabView = function(view, el) {
+  currentTabView = view;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  render();
+};
+
+// ── RENDER ──
+function render() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const todayStr = fmtDate(today);
+  const tomorrowStr = fmtDate(addDays(today, 1));
+  const weekEndStr = fmtDate(addDays(today, 6));
+  const all = getCheckouts(curProp);
+
+  document.getElementById("statCO").textContent = all.filter(c => c.date === todayStr).length;
+  document.getElementById("statTmr").textContent = all.filter(c => c.date === tomorrowStr).length;
+  document.getElementById("statOk").textContent = all.filter(c => c.cleaning === "ok" && c.date >= todayStr).length;
+  document.getElementById("statPend").textContent = all.filter(c => c.cleaning === "ng" && c.date >= todayStr).length;
+
+  const hasNg = all.some(c => c.cleaning === "ng" && c.date >= todayStr && c.date <= weekEndStr);
+  document.getElementById("alertBar").style.display = hasNg ? "flex" : "none";
+
+  let filtered;
+  if (currentTabView === "today")    filtered = all.filter(c => c.date === todayStr);
+  else if (currentTabView === "tomorrow") filtered = all.filter(c => c.date === tomorrowStr);
+  else if (currentTabView === "week") filtered = all.filter(c => c.date >= todayStr && c.date <= weekEndStr);
+  else filtered = all;
+
+  renderCards(filtered);
+}
+
+function renderCards(list) {
+  const el = document.getElementById("cardArea");
+  const p = PROPS[curProp];
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">✅</div><div style="font-size:14px;font-weight:700">チェックアウトなし</div></div>`;
+    return;
+  }
+
+  const today = fmtDate(new Date());
+  const tomorrow = fmtDate(addDays(new Date(), 1));
+  const groups = {};
+  list.forEach(c => { if (!groups[c.date]) groups[c.date] = []; groups[c.date].push(c); });
+
+  let html = "";
+  Object.keys(groups).sort().forEach(date => {
+    const d = new Date(date+"T00:00:00");
+    const label = date === today ? `今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`
+                : date === tomorrow ? `明日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`
+                : `${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    if (Object.keys(groups).length > 1) html += `<div class="sec-lbl">${label}</div>`;
+
+    groups[date].forEach((c, i) => {
+      const stMap = {
+        ok:   { dot:"var(--go)",    txt:"var(--go)",    label:"清掃確認済 ✅",   btnLabel:"完了済み",   btnCls:"btn-done" },
+        warn: { dot:"var(--maybe)", txt:"var(--maybe)", label:"手配済・未確認 ⏳", btnLabel:"確認する",  btnCls:"btn-confirm" },
+        ng:   { dot:"var(--ng)",    txt:"var(--ng)",    label:"未手配 ❌",       btnLabel:"今すぐ手配", btnCls:"btn-arrange" },
+      };
+      const st = stMap[c.cleaning] || stMap.ng;
+      html += `
+        <div class="co-card" style="animation-delay:${i*0.05}s">
+          <div class="co-card-hdr" style="background:${p.color}15">
+            <span style="font-size:18px">${p.icon}</span>
+            <span class="co-prop" style="color:${p.color}">${p.name}</span>
+            <span class="co-time">${c.time} CO</span>
+          </div>
+          <div class="co-body">
+            <div class="guest-av" style="background:${p.color}20">${c.emoji}</div>
+            <div style="flex:1">
+              <div class="guest-name">${c.guest}</div>
+              <div class="guest-meta">
+                <span>🛏 ${c.nights}泊</span>
+                <span>📅 ${c.date.slice(5).replace('-','/')}</span>
+                ${c.fromAirbnb ? `<span style="color:var(--airbnb);font-weight:700">Airbnb</span>` : ""}
+              </div>
+            </div>
+          </div>
+          <div class="co-footer">
+            <div class="cleaning-status">
+              <span class="st-dot" style="background:${st.dot}"></span>
+              <span style="color:${st.txt}">${st.label}</span>
+            </div>
+            <button class="action-btn ${st.btnCls}" onclick="openModal('${c.id}','${c.prop}','${c.date}','${c.cleaning}')">${st.btnLabel}</button>
+          </div>
+        </div>`;
+    });
+  });
+
+  html += `
+    <div class="sec-lbl">清掃手配</div>
+    <a href="https://yuzu-prog.github.io/shift-management/nihonbashi/nihonbashi/admin_nihonbashi.html" class="shift-link-card">
+      <div class="shift-link-ico">📋</div>
+      <div style="flex:1">
+        <div class="shift-link-ttl">清掃シフト管理を開く</div>
+        <div class="shift-link-sub">スタッフへのシフト依頼・確認はこちら</div>
+      </div>
+      <span class="shift-link-arr">›</span>
+    </a>`;
+
+  el.innerHTML = html;
+}
+
+// ── MODAL ──
+window.openModal = function(key, prop, date, currentStatus) {
+  modalTargetKey = key;
+  modalTargetProp = prop;
+  modalPickedStatus = currentStatus;
+  const p = PROPS[prop];
+  const settings = allSettings[prop] || {};
+  document.getElementById("modalPropName").textContent = `${p.icon} ${p.name}`;
+  document.getElementById("modalDate").textContent = `チェックアウト日：${date.slice(5).replace('-','/')}`;
+  const propInfo = settings.propInfo || {};
+  let infoHtml = "";
+  if (propInfo.lock)    infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">🔐 スマートロック</span><span class="m-prop-val">${propInfo.lock}</span></div>`;
+  if (propInfo.keybox)  infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">🗝 キーボックス</span><span class="m-prop-val">${propInfo.keybox}</span></div>`;
+  if (propInfo.address) infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">📍 住所</span><span class="m-prop-val">${propInfo.address}</span></div>`;
+  document.getElementById("modalPropInfo").innerHTML = infoHtml || `<div style="font-size:12px;color:var(--sub)">物件情報は設定画面から登録できます</div>`;
+  updateModalBtns(currentStatus);
+  document.getElementById("modalOverlay").classList.add("open");
+};
+
+function updateModalBtns(status) {
+  ["ng","warn","ok"].forEach(s => {
+    document.getElementById(`mBtn${s.charAt(0).toUpperCase()+s.slice(1)}`).classList.toggle("on", s === status);
+  });
+}
+
+window.pickStatus = function(status) {
+  modalPickedStatus = status;
+  updateModalBtns(status);
+};
+
+window.saveStatus = function() {
+  if (!modalTargetKey || !modalPickedStatus) { closeModal(); return; }
+  setSyncStatus(false);
+  set(ref(db, `${modalTargetProp}/checkoutStatuses/${modalTargetKey}`), modalPickedStatus)
+    .then(() => { setSyncStatus(true); toast("✅ ステータスを更新しました"); });
+  closeModal();
+};
+
+window.closeModal = function() {
+  document.getElementById("modalOverlay").classList.remove("open");
+};
+document.getElementById("modalOverlay").addEventListener("click", e => {
+  if (e.target === document.getElementById("modalOverlay")) closeModal();
+});
+</script>
+</body>
+</html>
