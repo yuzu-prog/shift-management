@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>清掃シフト【管理者】</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;
+  --go:#00956A;--go-bg:#E0F5EE;
+  --ng:#D42B22;--ng-bg:#FDECEA;
+  --maybe:#D08000;--maybe-bg:#FEF3C7;
+  --airbnb:#FF5A5F;
+  --ci:#4338CA;--ci-bg:#EEF2FF;
+  --lo:#B45309;--lo-bg:#FEF3C7;
+  --eci:#0369A1;--eci-bg:#E0F2FE;
+  --r:16px;--sh:0 2px 14px rgba(0,0,0,.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:82px}
+.hdr{background:var(--ink);padding:14px 16px 11px;position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.hdr h1{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:6px}
+.ab-dot{width:8px;height:8px;border-radius:50%;background:var(--airbnb)}
+.sync-indicator{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);background:rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;display:flex;align-items:center;gap:4px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:#4CAF50}
+.sync-dot.syncing{background:#FFB300;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.chips{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #EBEBEB;position:sticky;top:69px;z-index:90}
+.tab{flex:1;border:none;background:none;padding:10px 2px;font-size:11px;font-weight:700;font-family:inherit;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.mbar{background:#fff;border-bottom:1px solid #EBEBEB;padding:7px 10px;position:sticky;top:113px;z-index:89;display:flex;align-items:center;gap:6px}
+.mbar.hidden{display:none}
+.marr{background:none;border:1.5px solid #E0E0E0;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0}
+.marr:active{background:#F0F0F0}
+.mstrip{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1}
+.mstrip::-webkit-scrollbar{display:none}
+.mmbtn{flex-shrink:0;border:1.5px solid #E0E0E0;background:#FAFAFA;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--sub);white-space:nowrap;transition:all .2s}
+.mmbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mcnt{font-size:10px;color:var(--sub);flex-shrink:0;white-space:nowrap}
+.main{padding:12px}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:12px;color:var(--sub)}
+.loading-spinner{width:36px;height:36px;border:3px solid #EEE;border-top-color:var(--ink);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.house-sec{margin-bottom:14px}
+.house-hdr{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:var(--r) var(--r) 0 0}
+.house-icon{font-size:18px}
+.house-name{font-size:15px;font-weight:900;color:#fff;flex:1;letter-spacing:.5px}
+.house-cnt{font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:8px;padding:2px 8px;color:#fff}
+.add-sm{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
+.slist{background:var(--card);border-radius:0 0 var(--r) var(--r);box-shadow:var(--sh);overflow:hidden}
+.sempty{padding:20px;text-align:center;color:var(--sub);font-size:12px}
+.sitem{border-bottom:1px solid #F0F0F0}
+.sitem:last-child{border-bottom:none}
+.srow{display:flex;align-items:center;gap:7px;padding:10px 14px;cursor:pointer}
+.srow:active{background:#F9F9F9}
+.ab-src{width:6px;height:6px;border-radius:50%;background:var(--airbnb);flex-shrink:0}
+.mn-src{width:6px;height:6px;border-radius:50%;background:#CCC;flex-shrink:0}
+.sdate{font-size:13px;font-weight:800;min-width:66px}
+.stime{font-size:10px;color:var(--sub);min-width:62px}
+.spills{display:flex;gap:4px;flex:1;flex-wrap:wrap;align-items:center}
+.pill{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px}
+.pill.go{background:var(--go-bg);color:var(--go)}
+.pill.ng{background:var(--ng-bg);color:var(--ng)}
+.pill.maybe{background:var(--maybe-bg);color:var(--maybe)}
+.pill.blank{background:#F2F2F2;color:var(--sub)}
+.pill.ci{background:var(--ci-bg);color:var(--ci)}
+.pill.lo{background:var(--lo-bg);color:var(--lo)}
+.pill.eci{background:var(--eci-bg);color:var(--eci)}
+.chev{font-size:11px;color:#CCC;transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(90deg)}
+.go-names{font-size:11px;font-weight:700;color:var(--go);margin-top:3px;padding-left:2px}
+.sdetail{display:none;padding:4px 14px 14px}
+.sdetail.open{display:block;animation:fd .18s ease}
+@keyframes fd{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.ab-badge{display:flex;align-items:center;gap:6px;background:#FFF5F5;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--airbnb);font-weight:700}
+.ci-badge{display:flex;align-items:center;gap:6px;background:var(--ci-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--ci);font-weight:700}
+.lo-badge{display:flex;align-items:center;gap:6px;background:var(--lo-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--lo);font-weight:700}
+.eci-badge{display:flex;align-items:center;gap:6px;background:var(--eci-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--eci);font-weight:700}
+.edit-link{border:none;background:none;font-size:11px;color:var(--sub);text-decoration:underline;cursor:pointer;margin-bottom:8px;display:block;padding:0;font-family:inherit}
+.del-link{border:none;background:none;font-size:11px;color:var(--ng);text-decoration:underline;cursor:pointer;margin-bottom:8px;display:block;padding:0;font-family:inherit;margin-left:8px}
+.vgrid{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.vrow{display:flex;align-items:center;gap:6px}
+.nmpill{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:24px;border-radius:20px;font-size:11px;font-weight:800;color:#fff;padding:0 10px;flex-shrink:0}
+.vbtns{display:flex;gap:3px;flex:1}
+.vbtn{flex:1;border:1.5px solid #E4E4E4;background:#F9F9F9;border-radius:8px;padding:5px 2px;font-size:10px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--sub);text-align:center;transition:all .15s}
+.vbtn.go.on{background:var(--go-bg);border-color:var(--go);color:var(--go)}
+.vbtn.maybe.on{background:var(--maybe-bg);border-color:var(--maybe);color:var(--maybe)}
+.vbtn.ng.on{background:var(--ng-bg);border-color:var(--ng);color:var(--ng)}
+.cfm-btn{width:100%;background:var(--go);color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer}
+.cfm-tag{text-align:center;font-size:12px;font-weight:800;color:var(--go);padding:4px 0}
+.ical-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px;margin-bottom:12px}
+.ical-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ical-ico{width:36px;height:36px;border-radius:10px;background:#FFF0F0;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.ical-ttl{font-size:13px;font-weight:800}
+.ical-sub{font-size:10px;color:var(--sub);margin-top:1px}
+.ical-st{display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.stdot{width:7px;height:7px;border-radius:50%;background:#DDD}
+.stdot.ok{background:var(--go)}.stdot.err{background:var(--ng)}.stdot.loading{background:var(--maybe);animation:blink 1s infinite}
+.sttxt{font-size:11px;color:var(--sub)}
+.ical-row{display:flex;gap:5px}
+.ical-inp{flex:1;border:1.5px solid #E0E0E0;border-radius:10px;padding:8px 11px;font-size:12px;font-family:inherit;background:#FAFAFA;color:var(--ink);min-width:0}
+.ical-inp:focus{outline:none;border-color:var(--ink)}
+.ical-btn{background:var(--airbnb);color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0}
+.ical-evs{margin-top:9px;display:flex;flex-direction:column;gap:4px}
+.ical-ev{display:flex;align-items:center;gap:7px;background:#F8F8F8;border-radius:8px;padding:6px 10px}
+.ev-date{font-size:11px;font-weight:700;min-width:58px}
+.ev-name{font-size:11px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev-tag{font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;background:#FFE9E9;color:var(--airbnb)}
+.mk-btn{width:100%;margin-top:9px;background:linear-gradient(135deg,#FF5A5F,#E04A4F);color:#fff;border:none;border-radius:12px;padding:11px;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer}
+.howto{background:#FFF8F0;border:1.5px solid #FFD9A0;border-radius:var(--r);padding:12px;margin-bottom:12px}
+.howto-ttl{font-size:11px;font-weight:800;color:#A05000;margin-bottom:6px}
+.howto ol{padding-left:16px;display:flex;flex-direction:column;gap:4px}
+.howto li{font-size:11px;color:#6B4000;line-height:1.5}
+.set-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:14px;margin-bottom:12px}
+.set-ttl{font-size:13px;font-weight:800;margin-bottom:12px}
+.assign-table{width:100%;border-collapse:collapse;font-size:12px}
+.assign-table th{padding:6px 8px;text-align:center;font-weight:700;color:var(--sub);font-size:11px;border-bottom:1px solid #EEE}
+.assign-table td{padding:6px 8px;text-align:center;border-bottom:1px solid #F5F5F5}
+.assign-table tr:last-child td{border-bottom:none}
+.assign-name{display:flex;align-items:center;gap:6px;justify-content:flex-start}
+.assign-av{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0}
+.assign-cb{width:20px;height:20px;cursor:pointer;accent-color:var(--ink)}
+.house-th{font-size:11px;font-weight:800}
+.sc-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F5F5F5}
+.sc-row:last-child{border-bottom:none}
+.sc-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.sc-name{font-size:12px;font-weight:700;flex:1}
+.swatches{display:flex;gap:4px;flex-wrap:wrap}
+.sw{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s}
+.sw.on{border-color:var(--ink);transform:scale(1.25)}
+.sc-del{background:none;border:1.5px solid #EEE;border-radius:8px;padding:3px 8px;font-size:11px;color:var(--sub);font-family:inherit;cursor:pointer}
+.add-staff-row{display:flex;gap:6px;margin-top:10px}
+.add-staff-inp{flex:1;border:1.5px solid #E0E0E0;border-radius:10px;padding:8px 11px;font-size:13px;font-family:inherit;background:#FAFAFA}
+.add-staff-inp:focus{outline:none;border-color:var(--ink)}
+.add-staff-btn{background:var(--ink);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer}
+.preview-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.prev-pill{border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:#fff}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 32px;width:100%;max-width:460px;animation:up .28s ease}
+@keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.m-handle{width:34px;height:4px;background:#DDD;border-radius:2px;margin:0 auto 14px}
+.m-title{font-size:16px;font-weight:900;margin-bottom:14px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+.field select,.field input[type=date],.field input[type=time]{width:100%;border:1.5px solid #E0E0E0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;background:#FAFAFA;color:var(--ink);-webkit-appearance:none}
+.field select:focus,.field input:focus{outline:none;border-color:var(--ink)}
+.ci-toggle{display:flex;align-items:center;justify-content:space-between;background:#F5F5F7;border-radius:12px;padding:11px 14px}
+.ci-toggle-lbl{font-size:13px;font-weight:700}
+.toggle-sw{position:relative;width:44px;height:26px;flex-shrink:0}
+.toggle-sw input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:#DDD;border-radius:13px;cursor:pointer;transition:background .2s}
+.toggle-sw input:checked+.toggle-track{background:var(--ci)}
+.toggle-track::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle-sw input:checked+.toggle-track::after{transform:translateX(18px)}
+.m-ok{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:6px}
+.m-cancel{width:100%;background:#F3F3F3;color:var(--sub);border:none;border-radius:12px;padding:11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:7px}
+.fab{position:fixed;bottom:68px;right:14px;width:50px;height:50px;border-radius:50%;background:var(--ink);color:#fff;border:none;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,.22);cursor:pointer;z-index:99;transition:transform .2s}
+.fab:active{transform:scale(.92)}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #EBEBEB;display:flex;padding:7px 0 13px;z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--sub)}
+.nb.on{color:var(--ink)}
+.nb-icon{font-size:20px}
+.nb-lbl{font-size:10px;font-weight:700}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;border-radius:22px;padding:9px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* チェックアウト管理リンク */
+.co-link-banner{background:linear-gradient(135deg,#FF5A5F,#c0392b);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none}
+.co-link-ico{font-size:22px}
+.co-link-txt{flex:1}
+.co-link-ttl{font-size:13px;font-weight:900;color:#fff}
+.co-link-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px}
+.co-link-arr{font-size:18px;color:rgba(255,255,255,.6)}
+</style>
+</head>
+<body>
+
+<div id="pinScreen" style="display:none;position:fixed;inset:0;background:#1a1a2e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
+  <div style="font-size:32px;margin-bottom:8px">🔐</div>
+  <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">清掃シフト</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:32px">管理者画面</div>
+  <div style="display:flex;gap:12px;margin-bottom:32px">
+    <div id="pd0" style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .15s"></div>
+    <div id="pd1" style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .15s"></div>
+    <div id="pd2" style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .15s"></div>
+    <div id="pd3" style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .15s"></div>
+  </div>
+  <div id="pinError" style="font-size:12px;color:#FF6B6B;margin-bottom:16px;min-height:18px;font-weight:700"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,72px);gap:12px">
+    <button onclick="pinPress('1')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">1</button>
+    <button onclick="pinPress('2')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">2</button>
+    <button onclick="pinPress('3')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">3</button>
+    <button onclick="pinPress('4')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">4</button>
+    <button onclick="pinPress('5')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">5</button>
+    <button onclick="pinPress('6')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">6</button>
+    <button onclick="pinPress('7')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">7</button>
+    <button onclick="pinPress('8')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">8</button>
+    <button onclick="pinPress('9')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">9</button>
+    <button onclick="pinClear()" style="height:72px;border-radius:50%;background:rgba(255,255,255,.05);border:none;color:rgba(255,255,255,.6);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">CLR</button>
+    <button onclick="pinPress('0')" style="height:72px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:22px;font-weight:700;font-family:inherit;cursor:pointer">0</button>
+    <button onclick="pinBack()" style="height:72px;border-radius:50%;background:rgba(255,255,255,.05);border:none;color:rgba(255,255,255,.6);font-size:20px;font-family:inherit;cursor:pointer">⌫</button>
+  </div>
+</div>
+<script>
+(function(){
+  const CORRECT="0516";
+  const SESSION_KEY="adminPin_ok";
+  let entered="";
+  function updateDots(){for(let i=0;i<4;i++){const d=document.getElementById("pd"+i);d.style.background=i<entered.length?"#fff":"rgba(255,255,255,.2)";d.style.transform=i<entered.length?"scale(1.2)":"scale(1)"}}
+  window.pinPress=function(n){if(entered.length>=4)return;entered+=n;updateDots();if(entered.length===4){if(entered===CORRECT){sessionStorage.setItem(SESSION_KEY,"1");document.getElementById("pinScreen").style.display="none";document.getElementById("pinError").textContent=""}else{document.getElementById("pinError").textContent="PINが違います";setTimeout(()=>{entered="";updateDots();document.getElementById("pinError").textContent=""},800)}}};
+  window.pinBack=function(){if(entered.length>0){entered=entered.slice(0,-1);updateDots()}};
+  window.pinClear=function(){entered="";updateDots();document.getElementById("pinError").textContent=""};
+  if(sessionStorage.getItem(SESSION_KEY)==="1"){document.getElementById("pinScreen").style.display="none"}else{document.getElementById("pinScreen").style.display="flex"}
+})();
+</script>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <h1><span class="ab-dot"></span>清掃シフト</h1>
+    <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncTxt">接続中...</span></div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" id="tab-shifts"   onclick="setTab('shifts')">📅 シフト</button>
+  <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 予約連携</button>
+  <button class="tab"    id="tab-co"       onclick="setTab('co')">📋 CO管理</button>
+  <button class="tab"    id="tab-done"     onclick="setTab('done')">✅ 確定済み</button>
+  <button class="tab"    id="tab-remind"   onclick="setTab('remind')">🔔 週間</button>
+  <button class="tab"    id="tab-mremind"  onclick="setTab('mremind')">📅 月次</button>
+  <button class="tab"    id="tab-settings" onclick="setTab('settings')">⚙️ 設定</button>
+</div>
+
+<div class="mbar hidden" id="mbar">
+  <button class="marr" onclick="shiftMonth(-1)">‹</button>
+  <div class="mstrip" id="mstrip"></div>
+  <button class="marr" onclick="shiftMonth(1)">›</button>
+  <span class="mcnt" id="mcnt"></span>
+</div>
+
+<div class="main" id="main">
+  <div class="loading-screen"><div class="loading-spinner"></div><span>Firebaseに接続中...</span></div>
+</div>
+
+<button class="fab" id="fab" onclick="openAdd(-1)">＋</button>
+
+<div class="overlay" id="addOverlay">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div class="m-title" id="modalTitle">清掃予定を追加</div>
+    <div class="field"><label>棟</label><select id="fHouse"></select></div>
+    <div class="field"><label>日付</label><input type="date" id="fDate"></div>
+    <div class="field"><label>清掃開始時間</label><input type="time" id="fTimeS" value="11:00"></div>
+    <div class="field"><label>終了時間</label><input type="time" id="fTimeE" value="14:00"></div>
+    <div class="field"><div class="ci-toggle"><span class="ci-toggle-lbl">🏠 当日チェックインあり</span><label class="toggle-sw"><input type="checkbox" id="fCI"><span class="toggle-track"></span></label></div></div>
+    <div class="field"><div class="ci-toggle"><span class="ci-toggle-lbl">✈️ レイトアウトあり</span><label class="toggle-sw"><input type="checkbox" id="fLO"><span class="toggle-track"></span></label></div></div>
+    <div class="field"><div class="ci-toggle"><span class="ci-toggle-lbl">👜 アーリーチェックインあり</span><label class="toggle-sw"><input type="checkbox" id="fECI"><span class="toggle-track"></span></label></div></div>
+    <button class="m-ok" onclick="saveShift()">保存する</button>
+    <button class="m-cancel" onclick="closeAdd()">キャンセル</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="bnav">
+  <button class="nb on" id="nb-shifts"   onclick="setTab('shifts')">  <span class="nb-icon">🏠</span><span class="nb-lbl">棟一覧</span></button>
+  <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">予約連携</span></button>
+  <button class="nb"    id="nb-co"       onclick="setTab('co')">      <span class="nb-icon">📋</span><span class="nb-lbl">CO管理</span></button>
+  <button class="nb"    id="nb-done"     onclick="setTab('done')">    <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
+  <button class="nb"    id="nb-settings" onclick="setTab('settings')"><span class="nb-icon">⚙️</span><span class="nb-lbl">設定</span></button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",
+  authDomain: "shiftmanagement-b01bd.firebaseapp.com",
+  projectId: "shiftmanagement-b01bd",
+  storageBucket: "shiftmanagement-b01bd.firebasestorage.app",
+  messagingSenderId: "405322282736",
+  appId: "1:405322282736:web:a31507bfa42ad6e52cb435",
+  databaseURL: "https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const HOUSES=[
+  {name:"NEO",   icon:"🏠",color:"#FF4081"},
+  {name:"ZEN",   icon:"🍃",color:"#607D8B"},
+  {name:"MIYABI",icon:"🌸",color:"#1A237E"},
+];
+const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
+const WD=["日","月","火","水","木","金","土"];
+const DEMO_EVS=[
+  [{date:"2026-04-22",guest:"Tanaka Family"},{date:"2026-04-28",guest:"John Smith"},{date:"2026-05-08",guest:"李 明"}],
+  [{date:"2026-04-24",guest:"山田 太郎"},{date:"2026-04-29",guest:"Kim Jiyeon"},{date:"2026-05-14",guest:"佐藤 次郎"}],
+  [{date:"2026-04-26",guest:"Robert Brown"},{date:"2026-05-19",guest:"Yamamoto Ken"}],
+];
+
+let shifts={}, settings={staff:[],staffColors:[]}, checkoutStatuses={};
+let tab="shifts", selYM="", expanded=new Set(), editingId=null;
+let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let dbReady=false;
+
+onValue(ref(db,"shifts"), snap=>{shifts=snap.val()||{};if(dbReady)render()});
+onValue(ref(db,"settings"), snap=>{if(snap.val())settings=snap.val();if(!settings.staffColors)settings.staffColors=[];if(!dbReady){dbReady=true;const now=new Date();selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;setSyncStatus(true)}render()});
+onValue(ref(db,"checkoutStatuses"), snap=>{checkoutStatuses=snap.val()||{};if(dbReady)render()});
+
+function setSyncStatus(ok){const dot=document.getElementById("syncDot"),txt=document.getElementById("syncTxt");if(ok){dot.classList.remove("syncing");txt.textContent="同期済み"}else{dot.classList.add("syncing");txt.textContent="保存中..."}}
+function saveShiftToDB(id,data){setSyncStatus(false);set(ref(db,`shifts/${id}`),data).then(()=>setSyncStatus(true))}
+function deleteShiftFromDB(id){setSyncStatus(false);remove(ref(db,`shifts/${id}`)).then(()=>setSyncStatus(true))}
+function saveSettingsToDB(){setSyncStatus(false);set(ref(db,"settings"),settings).then(()=>setSyncStatus(true))}
+function updateVoteInDB(id,staffName,vote){setSyncStatus(false);update(ref(db,`shifts/${id}/votes`),{[staffName]:vote}).then(()=>setSyncStatus(true))}
+function confirmShiftInDB(id){setSyncStatus(false);update(ref(db,`shifts/${id}`),{confirmed:true}).then(()=>setSyncStatus(true))}
+
+function fd(s){const d=new Date(s+"T00:00:00");return`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`}
+function ym(s){return s.slice(0,7)}
+function yml(y){const[yr,mo]=y.split("-");return`${yr}年${parseInt(mo)}月`}
+function sc(i){return settings.staffColors[i]||PALETTE[i%PALETTE.length]}
+function counts(v){const staff=settings.staff||[];let g=0,m=0,n=0,b=0;staff.forEach(s=>{const x=(v||{})[s]||"";x==="go"?g++:x==="maybe"?m++:x==="ng"?n++:b++});return{g,m,n,b}}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+function shiftsArr(){return Object.entries(shifts).map(([id,s])=>({...s,id}))}
+
+window.setTab=function(t){
+  tab=t;
+  ["shifts","ical","co","done","remind","mremind","settings"].forEach(x=>{
+    const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);
+    if(te)te.classList.toggle("on",x===t);
+    if(ne)ne.classList.toggle("on",x===t);
+  });
+  document.getElementById("fab").style.display=(t==="shifts"||t==="done")?"flex":"none";
+  render();
+};
+
+function getMonths(conf){const s2=new Set();shiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));return[...s2].sort()}
+function renderMbar(conf){
+  const bar=document.getElementById("mbar");
+  if(tab==="ical"||tab==="settings"||tab==="co"){bar.classList.add("hidden");return}
+  bar.classList.remove("hidden");
+  const ms=getMonths(conf);
+  if(ms.length&&!ms.includes(selYM))selYM=ms[0];
+  document.getElementById("mstrip").innerHTML=ms.map(m=>`<button class="mmbtn ${m===selYM?"on":""}" onclick="selMonth('${m}')">${yml(m)}</button>`).join("");
+  const cnt=shiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;
+  document.getElementById("mcnt").textContent=`${cnt}件`;
+  setTimeout(()=>{const a=document.querySelector(".mmbtn.on");if(a)a.scrollIntoView({inline:"center",block:"nearest"})},50);
+}
+window.selMonth=function(m){selYM=m;renderMbar(tab==="done");render()};
+window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selYM),n=i+d;if(n>=0&&n<ms.length)window.selMonth(ms[n])};
+window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
+window.setVote=function(id,s,v){const sh=shifts[id];if(!sh)return;const cur=(sh.votes||{})[s]||"";updateVoteInDB(id,s,cur===v?"":v)};
+window.confirmShift=function(id){confirmShiftInDB(id);toast("✅ シフト確定！")};
+window.deleteShift=function(id){if(!confirm("このシフトを削除しますか？"))return;deleteShiftFromDB(id);expanded.delete(id);toast("削除しました")};
+
+// チェックアウトステータス更新
+window.updateCOStatus=function(key,status){
+  setSyncStatus(false);
+  set(ref(db,`checkoutStatuses/${key}`),status).then(()=>{setSyncStatus(true);toast("✅ ステータスを更新しました")});
+};
+
+function render(){
+  const el=document.getElementById("main");
+  if(!dbReady){el.innerHTML=`<div class="loading-screen"><div class="loading-spinner"></div><span>Firebaseに接続中...</span></div>`;return}
+  if(tab==="ical"){renderMbar(false);renderIcal(el);return}
+  if(tab==="settings"){document.getElementById("mbar").classList.add("hidden");renderSettings(el);return}
+  if(tab==="remind"){document.getElementById("mbar").classList.add("hidden");renderRemind(el);return}
+  if(tab==="mremind"){document.getElementById("mbar").classList.add("hidden");renderMonthlyRemind(el);return}
+  if(tab==="co"){document.getElementById("mbar").classList.add("hidden");renderCO(el);return}
+  renderMbar(tab==="done");
+  const conf=tab==="done";
+  const staff=settings.staff||[];
+  let html="";
+  HOUSES.forEach((h,hi)=>{
+    const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).sort((a,b)=>a.date.localeCompare(b.date));
+    const addBtn=!conf?`<button class="add-sm" onclick="openAdd(${hi})">＋</button>`:"";
+    const items=list.length?list.map(s=>renderItem(s,staff)).join(""):`<div class="sempty">予定なし</div>`;
+    html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span>${addBtn}</div><div class="slist">${items}</div></div>`;
+  });
+  el.innerHTML=html;
+}
+
+// ── チェックアウト管理タブ ──
+function renderCO(el){
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=fmtDate(today);
+  const weekEnd=fmtDate(addDays(today,6));
+  const allShifts=shiftsArr().filter(s=>s.date>=todayStr&&s.date<=weekEnd&&!s.confirmed).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
+  const pending=allShifts.filter(s=>(checkoutStatuses[`${s.date}_${s.hi}`]||"ng")==="ng").length;
+  const alertHtml=pending>0?`<div style="background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);margin-bottom:12px">⚠️ 清掃が未手配の物件が${pending}件あります！</div>`:"";
+  // 統計
+  const statHtml=`<div style="display:flex;gap:8px;margin-bottom:12px">
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${allShifts.filter(s=>s.date===todayStr).length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">本日CO</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--go)">${allShifts.filter(s=>(checkoutStatuses[s.date+"_"+s.hi]||"ng")==="ok").length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">清掃確認済</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${pending}</div><div style="font-size:10px;color:var(--sub);font-weight:700">要手配</div></div>
+  </div>`;
+  const groups={};
+  allShifts.forEach(s=>{if(!groups[s.date])groups[s.date]=[];groups[s.date].push(s)});
+  let cardsHtml="";
+  Object.keys(groups).sort().forEach(date=>{
+    const d=new Date(date+"T00:00:00");
+    const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
+    groups[date].forEach(s=>{
+      const h=HOUSES[s.hi];
+      const key=`${s.date}_${s.hi}`;
+      const st=checkoutStatuses[key]||"ng";
+      const stMap={
+        ok:{dot:"var(--go)",txt:"var(--go)",lbl:"清掃確認済 ✅",btnLbl:"完了済み",btnBg:"#EBEBEB",btnColor:"var(--sub)"},
+        warn:{dot:"var(--maybe)",txt:"var(--maybe)",lbl:"手配済・未確認 ⏳",btnLbl:"確認する",btnBg:"var(--maybe)",btnColor:"#fff"},
+        ng:{dot:"var(--ng)",txt:"var(--ng)",lbl:"未手配 ❌",btnLbl:"今すぐ手配",btnBg:"var(--ng)",btnColor:"#fff"},
+      };
+      const sm=stMap[st]||stMap.ng;
+      cardsHtml+=`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:18px">${h.icon}</span>
+          <span style="font-size:14px;font-weight:900;flex:1">${h.name}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--sub);background:#F3F3F3;padding:3px 9px;border-radius:8px">${s.te||"11:00"} CO</span>
+        </div>
+        <div style="padding:9px 13px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700">
+            <span style="width:8px;height:8px;border-radius:50%;background:${sm.dot};display:inline-block"></span>
+            <span style="color:${sm.txt}">${sm.lbl}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button onclick="cycleCOStatus('${key}')" style="border:none;border-radius:20px;font-size:11px;font-weight:800;font-family:inherit;padding:6px 14px;cursor:pointer;background:${sm.btnBg};color:${sm.btnColor}">${sm.btnLbl}</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  });
+  if(!allShifts.length) cardsHtml=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-size:14px;font-weight:700">今週のチェックアウトなし</div></div>`;
+  el.innerHTML=alertHtml+statHtml+cardsHtml;
+}
+
+window.cycleCOStatus=function(key){
+  const cur=checkoutStatuses[key]||"ng";
+  const next=cur==="ng"?"warn":cur==="warn"?"ok":"ng";
+  setSyncStatus(false);
+  set(ref(db,`checkoutStatuses/${key}`),next).then(()=>{setSyncStatus(true);toast(next==="ok"?"✅ 清掃確認済に更新":next==="warn"?"⏳ 手配済に更新":"❌ 未手配に戻しました")});
+};
+
+function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+
+function renderItem(s,staff){
+  const v=s.votes||{},c=counts(v),isOpen=expanded.has(s.id);
+  const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;
+  const goNames=staff.filter(st=>(v[st]||"")==="go");
+  const goNamesStr=goNames.length>0?`<div class="go-names">✅ ${goNames.join("・")}</div>`:"";
+  return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')">
+    ${s.fromAirbnb?`<span class="ab-src"></span>`:`<span class="mn-src"></span>`}
+    <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+      <span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span>
+      <div class="spills"><span class="pill go">⭕${c.g}</span><span class="pill maybe">△${c.m}</span><span class="pill ng">✕${c.n}</span>${c.b?`<span class="pill blank">未${c.b}</span>`:""}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div>
+    </div>${goNamesStr}</div>
+    <span class="chev ${isOpen?"open":""}">▶</span>
+  </div><div class="sdetail ${isOpen?"open":""}">${isOpen?renderDetail(s,staff):""}</div></div>`;
+}
+
+function renderDetail(s,staff){
+  const v=s.votes||{};
+  const abB=s.fromAirbnb?`<div class="ab-badge">✈️ Airbnbより自動作成${s.guestName?` — ${s.guestName}`:""}</div>`:"";
+  const ciB=s.ci?`<div class="ci-badge">🏠 当日チェックインあり</div>`:"";
+  const loB=s.lo?`<div class="lo-badge">✈️ レイトアウトあり</div>`:"";
+  const eciB=s.eci?`<div class="eci-badge">👜 アーリーチェックインあり</div>`:"";
+  const editL=`<div style="display:flex;gap:8px;margin-bottom:8px"><button class="edit-link" onclick="openEdit('${s.id}')">✏️ 編集する</button><button class="del-link" onclick="deleteShift('${s.id}')">🗑 削除</button></div>`;
+  const rows=staff.map((st,si)=>{const cur=v[st]||"";return`<div class="vrow"><span class="nmpill" style="background:${sc(si)}">${st}</span><div class="vbtns"><button class="vbtn go ${cur==="go"?"on":""}" onclick="setVote('${s.id}','${st}','go')">⭕行ける</button><button class="vbtn maybe ${cur==="maybe"?"on":""}" onclick="setVote('${s.id}','${st}','maybe')">△補欠</button><button class="vbtn ng ${cur==="ng"?"on":""}" onclick="setVote('${s.id}','${st}','ng')">✕無理</button></div></div>`}).join("");
+  const bot=s.confirmed?`<div class="cfm-tag">✅ 確定済み</div>`:`<button class="cfm-btn" onclick="confirmShift('${s.id}')">✅ このシフトを確定する</button>`;
+  return abB+ciB+loB+eciB+editL+`<div class="vgrid">${rows}</div>${bot}`;
+}
+
+window.syncIcal=async function(hi){
+  const url=icalState[hi].url.trim();if(!url){toast("URLを入力してください");return}
+  icalState[hi].status="loading";render();
+  try{const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const data=await res.json();const evs=parseIcal(data.contents||"","airbnb");if(!evs.length)throw 0;icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};toast(`Airbnb：${evs.length}件取得しました`)}
+  catch{icalState[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"})):[];icalState[hi].status="ok";icalState[hi].error="demo";toast("デモデータで表示しています")}
+  render();
+};
+window.syncBooking=async function(hi){
+  const url=icalStateBooking[hi].url.trim();if(!url){toast("URLを入力してください");return}
+  icalStateBooking[hi].status="loading";render();
+  try{const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const data=await res.json();const evs=parseIcal(data.contents||"","booking");if(!evs.length)throw 0;icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};toast(`Booking.com：${evs.length}件取得しました`)}
+  catch{icalStateBooking[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"})):[];icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";toast("デモデータで表示しています")}
+  render();
+};
+function parseIcal(text,source="airbnb"){return text.split("BEGIN:VEVENT").slice(1).map(b=>{const m=b.match(/DTEND[^:]*:(\d{8})/),sm=b.match(/SUMMARY:(.+)/);if(!m)return null;const d=new Date(m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8)+"T00:00:00");d.setDate(d.getDate()-1);return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source}}).filter(Boolean)}
+window.makeShifts=function(hi){makeShiftsFromEvs(hi,icalState[hi].events)};
+window.makeShiftsAll=function(hi){makeShiftsFromEvs(hi,[...icalState[hi].events,...icalStateBooking[hi].events])};
+function makeShiftsFromEvs(hi,evs){
+  if(!evs.length){toast("先に同期してください");return}
+  const staff=settings.staff||[];let added=0;
+  evs.forEach(ev=>{const exists=shiftsArr().find(s=>s.hi===hi&&s.date===ev.date&&!s.confirmed);if(!exists){const id=`shift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const v={};staff.forEach(s=>v[s]="");saveShiftToDB(id,{hi,date:ev.date,ts:"11:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,source:ev.source||"airbnb",ci:false,lo:false,eci:false});added++}});
+  toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");setTab("shifts");
+}
+
+function renderIcal(el){
+  let html=`<div class="howto"><div class="howto-ttl">📖 iCal URLの取得方法</div><ol>
+    <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」</li>
+    <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」</li>
+    <li>URLをコピーして下に貼り付け →「同期」ボタンを押す</li>
+  </ol></div>`;
+  HOUSES.forEach((h,hi)=>{
+    const stA=icalState[hi],stB=icalStateBooking[hi];
+    const stTxtA=stA.status==="ok"?(stA.error==="demo"?"デモデータ":`${stA.events.length}件`):stA.status==="loading"?"同期中...":"未設定";
+    const stTxtB=stB.status==="ok"?(stB.error==="demo"?"デモデータ":`${stB.events.length}件`):stB.status==="loading"?"同期中...":"未設定";
+    const dcA=stA.status==="ok"?"ok":stA.status==="loading"?"loading":"";
+    const dcB=stB.status==="ok"?"ok":stB.status==="loading"?"loading":"";
+    const allEvs=[...stA.events,...stB.events].sort((a,b)=>a.date.localeCompare(b.date));
+    const evRows=allEvs.slice(0,5).map(ev=>`<div class="ical-ev"><span class="ev-date">${fd(ev.date)}</span><span class="ev-name">${ev.summary}</span><span class="ev-tag" style="background:${ev.source==="booking"?"#003580":"#FF5A5F"};color:#fff">${ev.source==="booking"?"BK":"AB"}</span></div>`).join("");
+    const more=allEvs.length>5?`<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:3px">他${allEvs.length-5}件</div>`:"";
+    html+=`<div class="ical-card">
+      <div class="ical-head"><div class="ical-ico">${h.icon}</div><div><div class="ical-ttl">${h.name}</div><div class="ical-sub">予約サイト連携</div></div></div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--airbnb);margin-bottom:5px;display:flex;align-items:center;gap:6px">🏠 Airbnb<div class="stdot ${dcA}"></div><span class="sttxt">${stTxtA}</span></div>
+        <div class="ical-row"><input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" oninput="icalState[${hi}].url=this.value"><button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">🏨 Booking.com<div class="stdot ${dcB}"></div><span class="sttxt">${stTxtB}</span></div>
+        <div class="ical-row"><input class="ical-inp" id="ib-${hi}" placeholder="Booking.com iCal URLを貼り付け" value="${stB.url}" oninput="icalStateBooking[${hi}].url=this.value" style="border-color:#003580"><button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button></div>
+      </div>
+      ${allEvs.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShiftsAll(${hi})">🗓 両サイトのCO日に清掃シフトを自動作成</button>`:""}
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderRemind(el){
+  const today=new Date();today.setHours(0,0,0,0);const weekLater=new Date(today);weekLater.setDate(weekLater.getDate()+7);
+  const upcoming=shiftsArr().filter(s=>{const d=new Date(s.date+"T00:00:00");return d>=today&&d<=weekLater}).sort((a,b)=>a.date.localeCompare(b.date));
+  const staff=settings.staff||[];
+  function makeLineText(){const today2=new Date();const weekEnd=new Date(today2);weekEnd.setDate(weekEnd.getDate()+6);const hd=(d)=>`${d.getMonth()+1}/${d.getDate()}`;let txt=`🏠 清掃シフト週間予定\n${hd(today2)}〜${hd(weekEnd)}\n\n`;if(upcoming.length===0){txt+="今週の清掃予定はありません🎉"}else{upcoming.forEach(s=>{const h=HOUSES[s.hi];const v=s.votes||{};const go=staff.filter(st=>v[st]==="go");txt+=`【${h.name}】${fd(s.date)} ${s.ts}〜${s.te||""}\n`;if(go.length)txt+=`⭕行ける：${go.join("・")}\n`;else txt+=`⭕行ける：未定\n`;txt+="\n"})}return txt.trim()}
+  window._lineText=makeLineText();
+  const cards=upcoming.map(s=>{const h=HOUSES[s.hi];const v=s.votes||{};const noAnswer=staff.filter(st=>!(v[st]));const goStaff=staff.filter(st=>v[st]==="go");const daysLeft=Math.ceil((new Date(s.date+"T00:00:00")-today)/(1000*60*60*24));const urgency=daysLeft<=2?"#D42B22":daysLeft<=4?"#D08000":"#00956A";return`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden"><div style="background:${h.color};padding:10px 14px;display:flex;align-items:center;gap:8px"><span style="font-size:16px">${h.icon}</span><span style="font-size:14px;font-weight:800;color:#fff;flex:1">${h.name}</span>${s.confirmed?`<span style="background:#00956A;color:#fff;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:800">✅確定</span>`:`<span style="background:${urgency};color:#fff;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:800">${daysLeft===0?"今日":daysLeft+"日後"}</span>`}</div><div style="padding:12px 14px"><div style="font-size:13px;font-weight:800;margin-bottom:8px">${fd(s.date)}　${s.ts}〜${s.te||""}</div>${goStaff.length?`<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:var(--go)">⭕行ける（${goStaff.length}名）</span><br><span style="font-size:12px">${goStaff.join("・")}</span></div>`:""}${noAnswer.length?`<div style="background:#FFF8F0;border-radius:8px;padding:7px 10px"><span style="font-size:11px;font-weight:700;color:#D08000">⚠️ 未回答（${noAnswer.length}名）</span><br><span style="font-size:12px;color:var(--sub)">${noAnswer.join("・")}</span></div>`:""}</div></div>`}).join("");
+  el.innerHTML=`<div style="padding:12px"><div id="lineCopyBtn" style="width:100%;background:#06C755;color:#fff;border:none;border-radius:12px;padding:13px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;box-sizing:border-box" onclick="copyLineText()">📋 LINEに送る用テキストをコピー</div>${upcoming.length===0?`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:8px">🎉</div><div style="font-size:14px;font-weight:700">今後7日間の予定はありません</div></div>`:cards}</div>`;
+}
+
+window.copyLineText=function(){const txt=window._lineText||"";navigator.clipboard.writeText(txt).then(()=>toast("📋 コピーしました！")).catch(()=>{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);toast("📋 コピーしました！")})};
+
+function renderMonthlyRemind(el){
+  const today=new Date();const thisMonth=today.getMonth()+1;const nextMonth=thisMonth===12?1:thisMonth+1;const nextYear=thisMonth===12?today.getFullYear()+1:today.getFullYear();const nextYM=`${nextYear}-${String(nextMonth).padStart(2,"0")}`;
+  const nextShifts=shiftsArr().filter(s=>s.date.startsWith(nextYM)).sort((a,b)=>a.date.localeCompare(b.date));
+  const staff=settings.staff||[];
+  function makeMonthlyLineText(){let txt=`📅 【来月シフトのご確認お願い】\n${nextYear}年${nextMonth}月の清掃シフトです。\n\n`;if(nextShifts.length===0){txt+=`来月（${nextMonth}月）のシフトはまだ登録されていません。`}else{HOUSES.forEach((h,hi)=>{const list=nextShifts.filter(s=>s.hi===hi);if(!list.length)return;txt+=`【${h.name}】\n`;list.forEach(s=>{const v=s.votes||{};const goStaff=staff.filter(st=>v[st]==="go");txt+=`・${fd(s.date)} ${s.ts}〜${s.te||""} ${s.confirmed?"✅確定":""}\n`;if(goStaff.length)txt+=`  ⭕行ける：${goStaff.join("・")}\n`});txt+="\n"})}txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/staff.html`;return txt.trim()}
+  window._monthlyLineText=makeMonthlyLineText();
+  el.innerHTML=`<div style="padding:12px"><div style="font-size:15px;font-weight:900;margin-bottom:14px">📅 ${nextYear}年${nextMonth}月のシフト状況</div><button style="width:100%;background:#06C755;color:#fff;border:none;border-radius:12px;padding:14px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:14px" onclick="copyMonthlyLineText()">📋 来月シフトのリマインドをコピー</button><div style="background:#F8F8F8;border-radius:12px;padding:12px 14px"><div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">📄 送信テキストプレビュー</div><div style="font-size:11px;white-space:pre-wrap;line-height:1.7">${makeMonthlyLineText().replace(/</g,"&lt;")}</div></div></div>`;
+}
+window.copyMonthlyLineText=function(){const txt=window._monthlyLineText||"";navigator.clipboard.writeText(txt).then(()=>toast("📋 コピーしました！")).catch(()=>{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);toast("📋 コピーしました！")})};
+
+function renderSettings(el){
+  const staff=settings.staff||[];const assigns=settings.assigns||{};const propInfo=settings.propInfo||{};
+  const propCards=HOUSES.map((h,hi)=>{const info=propInfo[hi]||{};return`<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #F0F0F0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div style="width:32px;height:32px;border-radius:10px;background:${h.color};display:flex;align-items:center;justify-content:center;font-size:16px">${h.icon}</div><span style="font-size:14px;font-weight:800;color:${h.color}">${h.name}</span></div><div class="field"><label>🔐 スマートロック番号</label><input type="text" placeholder="例：1234" value="${info.lock||""}" oninput="updatePropInfo(${hi},'lock',this.value)" style="width:100%;border:1.5px solid #E0E0E0;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;background:#FAFAFA"></div><div class="field"><label>🗝 キーボックス番号</label><input type="text" placeholder="例：5678" value="${info.keybox||""}" oninput="updatePropInfo(${hi},'keybox',this.value)" style="width:100%;border:1.5px solid #E0E0E0;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;background:#FAFAFA"></div><div class="field"><label>📍 住所</label><input type="text" placeholder="例：東京都港区赤坂〇〇" value="${info.address||""}" oninput="updatePropInfo(${hi},'address',this.value)" style="width:100%;border:1.5px solid #E0E0E0;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;background:#FAFAFA"></div><button onclick="savePropInfo(${hi})" style="background:${h.color};color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">💾 保存</button></div>`}).join("");
+  const rows=staff.map((s,i)=>`<div class="sc-row"><div class="sc-av" style="background:${sc(i)}">${s[0]}</div><span class="sc-name">${s}</span><div class="swatches">${PALETTE.map(c=>`<div class="sw ${sc(i)===c?"on":""}" style="background:${c}" onclick="setColor(${i},'${c}')"></div>`).join("")}</div><button class="sc-del" onclick="delStaff(${i})">削除</button></div>`).join("");
+  const assignRows=staff.map((s,i)=>{const ua=assigns[s]||[0,1,2];const cbs=HOUSES.map((h,hi)=>`<td><input type="checkbox" class="assign-cb" ${ua.includes(hi)?"checked":""} onchange="toggleAssign('${s}',${hi},this.checked)"></td>`).join("");return`<tr><td><div class="assign-name"><div class="assign-av" style="background:${sc(i)}">${s[0]}</div><span style="font-weight:700;font-size:12px">${s}</span></div></td>${cbs}</tr>`}).join("");
+  const houseThs=HOUSES.map(h=>`<th class="house-th">${h.icon}<br>${h.name}</th>`).join("");
+  el.innerHTML=`<div class="set-card"><div class="set-ttl">🏠 物件情報</div>${propCards}</div><div class="set-card"><div class="set-ttl">🏠 担当棟の設定</div><table class="assign-table"><thead><tr><th style="text-align:left">スタッフ</th>${houseThs}</tr></thead><tbody>${assignRows}</tbody></table></div><div class="set-card"><div class="set-ttl">👤 スタッフ管理</div>${rows}<div class="add-staff-row"><input class="add-staff-inp" id="newName" placeholder="新しいスタッフ名を入力"><button class="add-staff-btn" onclick="addStaff()">追加</button></div></div><div class="set-card"><div class="set-ttl">👀 カラープレビュー</div><div class="preview-pills">${staff.map((s,i)=>`<span class="prev-pill" style="background:${sc(i)}">${s}</span>`).join("")}</div></div>`;
+}
+
+let propInfoDraft={};
+window.updatePropInfo=function(hi,field,val){if(!propInfoDraft[hi])propInfoDraft[hi]={...(settings.propInfo||{})[hi]||{}};propInfoDraft[hi][field]=val};
+window.savePropInfo=function(hi){if(!settings.propInfo)settings.propInfo={};settings.propInfo[hi]={...(settings.propInfo[hi]||{}),...(propInfoDraft[hi]||{})};saveSettingsToDB();toast(`${HOUSES[hi].name}の物件情報を保存しました！`)};
+window.setColor=function(i,c){settings.staffColors[i]=c;saveSettingsToDB();render()};
+window.toggleAssign=function(name,hi,checked){if(!settings.assigns)settings.assigns={};if(!settings.assigns[name])settings.assigns[name]=[0,1,2];if(checked){if(!settings.assigns[name].includes(hi))settings.assigns[name].push(hi)}else{settings.assigns[name]=settings.assigns[name].filter(x=>x!==hi)}saveSettingsToDB();toast(`${name}の担当棟を更新しました`)};
+window.addStaff=function(){const inp=document.getElementById("newName"),name=inp.value.trim();if(!name){toast("名前を入力してください");return}if(settings.staff.includes(name)){toast("同じ名前がすでにあります");return}settings.staff.push(name);settings.staffColors.push(PALETTE[settings.staff.length%PALETTE.length]);saveSettingsToDB();render();toast(`${name} を追加しました！`);inp.value=""};
+window.delStaff=function(i){if(settings.staff.length<=1){toast("最低1名必要です");return}const name=settings.staff[i];settings.staff.splice(i,1);settings.staffColors.splice(i,1);saveSettingsToDB();render();toast(`${name} を削除しました`)};
+
+function buildOpts(sel){return HOUSES.map((h,i)=>`<option value="${i}" ${i===sel?"selected":""}>${h.icon} ${h.name}</option>`).join("")}
+window.openAdd=function(hi){editingId=null;document.getElementById("modalTitle").textContent="清掃予定を追加";document.getElementById("fHouse").innerHTML=buildOpts(hi>=0?hi:0);document.getElementById("fDate").value=new Date().toISOString().slice(0,10);document.getElementById("fTimeS").value="11:00";document.getElementById("fTimeE").value="14:00";document.getElementById("fCI").checked=false;document.getElementById("fLO").checked=false;document.getElementById("fECI").checked=false;document.getElementById("addOverlay").classList.add("open")};
+window.openEdit=function(id){const s=shifts[id];if(!s)return;editingId=id;document.getElementById("modalTitle").textContent="清掃予定を編集";document.getElementById("fHouse").innerHTML=buildOpts(s.hi);document.getElementById("fDate").value=s.date;document.getElementById("fTimeS").value=s.ts||"11:00";document.getElementById("fTimeE").value=s.te||"14:00";document.getElementById("fCI").checked=s.ci||false;document.getElementById("fLO").checked=s.lo||false;document.getElementById("fECI").checked=s.eci||false;document.getElementById("addOverlay").classList.add("open")};
+window.closeAdd=function(){document.getElementById("addOverlay").classList.remove("open")};
+window.saveShift=function(){const hi=parseInt(document.getElementById("fHouse").value);const date=document.getElementById("fDate").value;const ts=document.getElementById("fTimeS").value||"11:00";const te=document.getElementById("fTimeE").value||"";const ci=document.getElementById("fCI").checked;const lo=document.getElementById("fLO").checked;const eci=document.getElementById("fECI").checked;if(!date){toast("日付を選んでください");return}const staff=settings.staff||[];if(editingId){update(ref(db,`shifts/${editingId}`),{hi,date,ts,te,ci,lo,eci});toast("更新しました！")}else{const id=`shift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const v={};staff.forEach(s=>v[s]="");saveShiftToDB(id,{hi,date,ts,te,votes:v,confirmed:false,fromAirbnb:false,ci,lo,eci});toast(`${HOUSES[hi].name}に追加しました`)}window.closeAdd()};
+document.getElementById("addOverlay").addEventListener("click",e=>{if(e.target===document.getElementById("addOverlay"))window.closeAdd()});
+</script>
+</body>
+</html>
