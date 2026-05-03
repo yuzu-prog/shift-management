@@ -13,7 +13,7 @@
   --maybe:#D08000;--maybe-bg:#FEF3C7;
   --airbnb:#FF5A5F;
   --r:16px;--sh:0 2px 14px rgba(0,0,0,.07);
-  --ohana:#E91E8C;--yahiro:#1565C0;
+  --ohana:#E91E8C;--yahiro:#1565C0;--nikko:#2E7D32;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:90px}
@@ -35,6 +35,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .prop-btn{flex:1;border:none;background:none;padding:12px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--sub);border-bottom:3px solid transparent;transition:all .2s}
 .prop-btn.ohana.on{color:var(--ohana);border-bottom-color:var(--ohana)}
 .prop-btn.yahiro.on{color:var(--yahiro);border-bottom-color:var(--yahiro)}
+.prop-btn.nikko.on{color:var(--nikko);border-bottom-color:var(--nikko)}
 
 /* WEEK STRIP */
 .week-wrap{background:var(--card);border-bottom:1px solid #EBEBEB;padding:10px 14px 12px}
@@ -152,6 +153,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <div class="prop-switcher">
   <button class="prop-btn ohana on" id="propBtn-ohana" onclick="switchProp('ohana')">🌺 オハナ</button>
   <button class="prop-btn yahiro" id="propBtn-yahiro" onclick="switchProp('yahiro')">🏠 八広</button>
+  <button class="prop-btn nikko" id="propBtn-nikko" onclick="switchProp('nikko')">🌿 日光</button>
 </div>
 
 <!-- WEEK STRIP -->
@@ -238,15 +240,16 @@ const db = getDatabase(app);
 const PROPS = {
   ohana:  { name:"オハナ", icon:"🌺", color:"#E91E8C" },
   yahiro: { name:"八広",   icon:"🏠", color:"#1565C0" },
+  nikko:  { name:"日光",   icon:"🌿", color:"#2E7D32" },
 };
 const WD = ["日","月","火","水","木","金","土"];
 const GUEST_EMOJIS = ["👩","👨","🧑","👩‍💼","👨‍💼","🧔","👩‍🦰","👱"];
 const SAMPLE_GUESTS = ["田中さん","浜辺さん","佐久間さん","高柳さん","金子さん","中澤さん","オーナー"];
 
 // ── STATE ──
-let allShifts = { ohana:{}, yahiro:{} };
-let allSettings = { ohana:{}, yahiro:{} };
-let checkoutStatuses = { ohana:{}, yahiro:{} };
+let allShifts = { ohana:{}, yahiro:{}, nikko:{} };
+let allSettings = { ohana:{}, yahiro:{}, nikko:{} };
+let checkoutStatuses = { ohana:{}, yahiro:{}, nikko:{} };
 let curProp = "ohana";
 let currentTabView = "today";
 let selectedDate = fmtDate(new Date());
@@ -254,7 +257,7 @@ let modalTargetKey = null, modalTargetProp = null, modalPickedStatus = null;
 let dbReady = false;
 
 // ── FIREBASE ──
-["ohana","yahiro"].forEach(prop => {
+["ohana","yahiro","nikko"].forEach(prop => {
   onValue(ref(db, `${prop}/shifts`), snap => {
     allShifts[prop] = snap.val() || {};
     if (dbReady) render();

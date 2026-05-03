@@ -281,6 +281,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <button id="propBtn-yahiro" onclick="switchProp('yahiro')"
       style="flex:1;border:none;border-radius:20px;padding:6px 0;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;background:#1565C0;color:#fff;opacity:0.45;transition:opacity .2s">
       🏠 八広</button>
+    <button id="propBtn-nikko" onclick="switchProp('nikko')"
+      style="flex:1;border:none;border-radius:20px;padding:6px 0;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;background:#2E7D32;color:#fff;opacity:0.45;transition:opacity .2s">
+      🌿 日光</button>
   </div>
 </div>
 
@@ -380,17 +383,20 @@ const DEMO_EVS=[
 ];
 
 // ── 物件別スタッフ定義 ──
-const PROPERTY_KEYS=["ohana","yahiro"];
+const PROPERTY_KEYS=["ohana","yahiro","nikko"];
 const PROPERTY_DEFAULT_STAFF={
   ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
   yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  nikko:  {staff:["フジイ","オーナー"],                       staffColors:["#2E7D32","#FF6F00"]},
 };
 
 // ── STATE ──
-let allShifts  = {ohana:{}, yahiro:{}};
+let allShifts  = {ohana:{}, yahiro:{}, nikko:{}};
 let allSettings= {
   ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
   yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  nikko:  {staff:["フジイ","オーナー"],                       staffColors:["#2E7D32","#FF6F00"]},
+  nikko:  {staff:["フジイ","オーナー"],                       staffColors:["#2E7D32","#FF6F00"]},
 };
 let curProp="ohana";
 function getCurShifts()  { return allShifts[curProp]||{}; }
@@ -479,7 +485,7 @@ function shiftsArr(){return Object.entries(getCurShifts()).map(([id,s])=>({...s,
 window.switchProp=function(prop){
   curProp=prop;
   expanded.clear();
-  const props=["ohana","yahiro"];
+  const props=["ohana","yahiro","nikko"];
   props.forEach(p=>{
     const btn=document.getElementById("propBtn-"+p);
     if(btn) btn.style.opacity=(p===prop)?"1":"0.45";
@@ -706,9 +712,10 @@ function renderCO(el){
     const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
     cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
     groups[date].forEach(s=>{
-      const hName=curProp==="ohana"?"オハナ":"八広";
-      const hIcon=curProp==="ohana"?"🌺":"🏠";
-      const hColor=curProp==="ohana"?"#E91E8C":"#1565C0";
+      const propMap={ohana:{name:"オハナ",icon:"🌺",color:"#E91E8C"},yahiro:{name:"八広",icon:"🏠",color:"#1565C0"},nikko:{name:"日光",icon:"🌿",color:"#2E7D32"}};
+      const hName=propMap[curProp]?.name||curProp;
+      const hIcon=propMap[curProp]?.icon||"🏠";
+      const hColor=propMap[curProp]?.color||"#333";
       const key=`${s.date}_${s.hi}`;
       const st=coStatuses[key]||"ng";
       const stMap={
