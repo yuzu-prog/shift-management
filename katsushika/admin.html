@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>nihonbashi【管理者】</title>
+<title>katsushika【管理者】</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -183,7 +183,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <!-- PIN ロック画面 -->
 <div id="pinScreen" style="display:none;position:fixed;inset:0;background:#1a1a2e;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px">
   <div style="font-size:32px;margin-bottom:8px">🔐</div>
-  <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">nihonbashi</div>
+  <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">katsushika</div>
   <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:32px">管理者画面</div>
 
   <!-- PIN表示 -->
@@ -217,7 +217,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <script>
 // PIN認証
 (function(){
-  const CORRECT="1234";
+  const CORRECT="0516";
   const SESSION_KEY="adminPin_ok";
   let entered="";
 
@@ -268,19 +268,19 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="hdr">
   <div class="hdr-top">
-    <h1><span class="ab-dot"></span>nihonbashi</h1>
+    <h1><span class="ab-dot"></span>katsushika</h1>
     <div class="sync-indicator">
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncTxt">接続中...</span>
     </div>
   </div>
   <div style="display:flex;gap:7px;margin-top:7px">
-    <button id="propBtn-ohana"  onclick="switchProp('ohana')"
+    <button id="propBtn-shogun"  onclick="switchProp('shogun')"
       style="flex:1;border:none;border-radius:20px;padding:6px 0;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;background:#E91E8C;color:#fff;opacity:1;transition:opacity .2s">
-      🌺 オハナ</button>
-    <button id="propBtn-yahiro" onclick="switchProp('yahiro')"
+      🌺 SHOGUN</button>
+    <button id="propBtn-yuzuki" onclick="switchProp('yuzuki')"
       style="flex:1;border:none;border-radius:20px;padding:6px 0;font-size:12px;font-weight:800;font-family:inherit;cursor:pointer;background:#1565C0;color:#fff;opacity:0.45;transition:opacity .2s">
-      🏠 八広</button>
+      🏠 YUZUKI</button>
   </div>
 </div>
 
@@ -352,13 +352,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCL2iZohtlsdDzv4f-VcZ3zNpKFbqSaiSw",
-  authDomain: "nihonbashi-745dc.firebaseapp.com",
-  databaseURL: "https://nihonbashi-745dc-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nihonbashi-745dc",
-  storageBucket: "nihonbashi-745dc.firebasestorage.app",
-  messagingSenderId: "1003341912889",
-  appId: "1:1003341912889:web:6fdfa04ae0173d1783e6e8"
+  apiKey: "AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",
+  authDomain: "katsushika-745dc.firebaseapp.com",
+  databaseURL: "https://katsushika-745dc-default-rtdb.firebaseio.com",
+  projectId: "katsushika-745dc",
+  storageBucket: "katsushika-745dc.firebasestorage.app",
+  messagingSenderId: "405322282736",
+  appId: "1:405322282736:web:a31507bfa42ad6e52cb435"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -366,8 +366,8 @@ const db = getDatabase(app);
 
 // ── CONSTANTS ──
 const HOUSES=[
-  {name:"オハナ",icon:"🌺",color:"#E91E8C",bg:"#FCE4F3"},
-  {name:"八広", icon:"🏠",color:"#1565C0",bg:"#E3F2FD"},
+  {name:"SHOGUN",icon:"🌺",color:"#E91E8C",bg:"#FCE4F3"},
+  {name:"YUZUKI", icon:"🏠",color:"#1565C0",bg:"#E3F2FD"},
 ];
 const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
 const WD=["日","月","火","水","木","金","土"];
@@ -378,19 +378,19 @@ const DEMO_EVS=[
 ];
 
 // ── 物件別スタッフ定義 ──
-const PROPERTY_KEYS=["ohana","yahiro"];
+const PROPERTY_KEYS=["shogun","yuzuki"];
 const PROPERTY_DEFAULT_STAFF={
-  ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
-  yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  shogun:  {staff:["武田","金子","森川","坂口","伊藤"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
+  yuzuki: {staff:["武田","金子","金子","伊藤"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
 };
 
 // ── STATE ──
-let allShifts  = {ohana:{}, yahiro:{}};
+let allShifts  = {shogun:{}, yuzuki:{}};
 let allSettings= {
-  ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
-  yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  shogun:  {staff:["武田","金子","森川","坂口","伊藤"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
+  yuzuki: {staff:["武田","金子","金子","伊藤"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
 };
-let curProp="ohana";
+let curProp="shogun";
 function getCurShifts()  { return allShifts[curProp]||{}; }
 function getCurSettings(){ return allSettings[curProp]||{staff:[],staffColors:[]}; }
 
@@ -470,7 +470,7 @@ function shiftsArr(){return Object.entries(getCurShifts()).map(([id,s])=>({...s,
 window.switchProp=function(prop){
   curProp=prop;
   expanded.clear();
-  const props=["ohana","yahiro"];
+  const props=["shogun","yuzuki"];
   props.forEach(p=>{
     const btn=document.getElementById("propBtn-"+p);
     if(btn) btn.style.opacity=(p===prop)?"1":"0.45";
@@ -563,7 +563,7 @@ function render(){
   const conf=tab==="done";
   const staff=getCurSettings().staff||[];
   let html="";
-  const curHi=curProp==="ohana"?0:1;
+  const curHi=curProp==="shogun"?0:1;
   HOUSES.forEach((h,hi)=>{
     if(hi!==curHi) return;
     const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM)
@@ -621,7 +621,7 @@ function renderMonthlyRemind(el){
         txt+="\n";
       });
     }
-    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_ohana.html`;
+    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/katsushika/staff_shogun.html`;
     return txt.trim();
   }
 
@@ -1082,7 +1082,7 @@ function buildOpts(sel){return HOUSES.map((h,i)=>`<option value="${i}" ${i===sel
 window.openAdd=function(hi){
   editingId=null;
   document.getElementById("modalTitle").textContent="清掃予定を追加";
-  const defaultHi=curProp==="ohana"?0:1;
+  const defaultHi=curProp==="shogun"?0:1;
   document.getElementById("fHouse").innerHTML=buildOpts(hi>=0?hi:defaultHi);
   document.getElementById("fDate").value=new Date().toISOString().slice(0,10);
   document.getElementById("fTimeS").value="10:00";
