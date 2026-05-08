@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>タイミー | 葛飾 清掃シフト</title>
+<title>平野 | 葛飾 清掃シフト</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;--go:#00956A;--go-bg:#E0F5EE;--ng:#D42B22;--ng-bg:#FDECEA;--maybe:#D08000;--maybe-bg:#FEF3C7;--airbnb:#FF5A5F;--ci:#4338CA;--ci-bg:#EEF2FF;--lo:#B45309;--lo-bg:#FEF3C7;--eci:#0369A1;--eci-bg:#E0F2FE;--r:16px;--sh:0 2px 14px rgba(0,0,0,.07)}
@@ -12,8 +12,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .hdr{background:var(--ink);padding:14px 16px 11px;position:sticky;top:0;z-index:100}
 .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
 .hdr h1{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:6px}
-.ab-dot{width:8px;height:8px;border-radius:50%;background:#7B2FBE}
-.staff-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);background:#7B2FBE;border-radius:20px;padding:4px 10px}
+.ab-dot{width:8px;height:8px;border-radius:50%;background:#F4511E}
+.staff-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);background:#F4511E;border-radius:20px;padding:4px 10px}
 .sync-indicator{font-size:10px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px;margin-top:4px}
 .sync-dot{width:5px;height:5px;border-radius:50%;background:#4CAF50}
 .sync-dot.syncing{background:#FFB300;animation:blink 1s infinite}
@@ -95,7 +95,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <div class="hdr">
   <div class="hdr-top">
     <h1><span class="ab-dot"></span>葛飾 清掃シフト</h1>
-    <span class="staff-label">タイミー</span>
+    <span class="staff-label">平野</span>
   </div>
   <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncTxt">接続中</span></div>
 </div>
@@ -135,8 +135,8 @@ import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/fireb
 const firebaseConfig={apiKey:"AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",authDomain:"shiftmanagement-b01bd.firebaseapp.com",projectId:"shiftmanagement-b01bd",storageBucket:"shiftmanagement-b01bd.firebasestorage.app",messagingSenderId:"405322282736",appId:"1:405322282736:web:a31507bfa42ad6e52cb435",databaseURL:"https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"};
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
-const ME="タイミー";
-const MY_COLOR="#7B2FBE";
+const ME="平野";
+const MY_COLOR="#F4511E";
 
 const HOUSES=[
   {name:"SHOGUN",icon:"🏯",color:"#1A237E"},
