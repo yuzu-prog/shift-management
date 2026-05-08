@@ -289,7 +289,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="tabs">
   <button class="tab on" id="tab-shifts"   onclick="setTab('shifts')">📅 シフト</button>
-  <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 Airbnb</button>
+  <button class="tab"    id="tab-ical"     onclick="setTab('ical')">🔗 予約連携</button>
+  <button class="tab"    id="tab-co"       onclick="setTab('co')">📋 CO管理</button>
   <button class="tab"    id="tab-done"     onclick="setTab('done')">✅ 確定済み</button>
   <button class="tab"    id="tab-remind"   onclick="setTab('remind')">🔔 週間</button>
   <button class="tab"    id="tab-mremind"  onclick="setTab('mremind')">📅 月次</button>
@@ -342,7 +343,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="bnav">
   <button class="nb on" id="nb-shifts"   onclick="setTab('shifts')">  <span class="nb-icon">🏠</span><span class="nb-lbl">棟一覧</span></button>
-  <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">Airbnb</span></button>
+  <button class="nb"    id="nb-ical"     onclick="setTab('ical')">    <span class="nb-icon">🔗</span><span class="nb-lbl">予約連携</span></button>
+  <button class="nb"    id="nb-co"       onclick="setTab('co')">      <span class="nb-icon">📋</span><span class="nb-lbl">CO管理</span></button>
   <button class="nb"    id="nb-done"     onclick="setTab('done')">    <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
   <button class="nb"    id="nb-remind"   onclick="setTab('remind')">  <span class="nb-icon">🔔</span><span class="nb-lbl">週間</span></button>
   <button class="nb"    id="nb-mremind"  onclick="setTab('mremind')"> <span class="nb-icon">📅</span><span class="nb-lbl">月次</span></button>
@@ -371,6 +373,7 @@ const db = getDatabase(app);
 const HOUSES=[
   {name:"オハナ",icon:"🌺",color:"#E91E8C",bg:"#FCE4F3"},
   {name:"八広", icon:"🏠",color:"#1565C0",bg:"#E3F2FD"},
+  {name:"日光", icon:"🌿",color:"#2E7D32",bg:"#E8F5E9"},
 ];
 const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
 const WD=["日","月","火","水","木","金","土"];
@@ -381,24 +384,28 @@ const DEMO_EVS=[
 ];
 
 // ── 物件別スタッフ定義 ──
-const PROPERTY_KEYS=["ohana","yahiro"];
+const PROPERTY_KEYS=["ohana","yahiro","nikko"];
 const PROPERTY_DEFAULT_STAFF={
   ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
   yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  nikko:  {staff:["フジイ","オーナー"],                       staffColors:["#2E7D32","#FF6F00"]},
 };
 
 // ── STATE ──
-let allShifts  = {ohana:{}, yahiro:{}};
+let allShifts  = {ohana:{}, yahiro:{}, nikko:{}};
 let allSettings= {
   ohana:  {staff:["浜辺","佐久間","高柳","中澤","オーナー"],  staffColors:["#E53935","#1E88E5","#43A047","#FFB300","#00897B"]},
   yahiro: {staff:["浜辺","佐久間","金子","オーナー"],         staffColors:["#E53935","#1E88E5","#8E24AA","#00897B"]},
+  nikko:  {staff:["フジイ","オーナー"],                       staffColors:["#2E7D32","#FF6F00"]},
 };
 let curProp="ohana";
 function getCurShifts()  { return allShifts[curProp]||{}; }
 function getCurSettings(){ return allSettings[curProp]||{staff:[],staffColors:[]}; }
 
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
+let checkoutStatuses={};
 let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReadyCnt=0;
 
 // ── FIREBASE LISTENERS (物件別) ──
@@ -421,6 +428,11 @@ PROPERTY_KEYS.forEach(prop=>{
       // 初回のみデフォルトスタッフをFirebaseに書き込む
       set(ref(db,`${prop}/settings`), PROPERTY_DEFAULT_STAFF[prop]);
     }
+    render();
+  });
+  onValue(ref(db,`${prop}/checkoutStatuses`), snap=>{
+    if(!checkoutStatuses[prop]) checkoutStatuses[prop]={};
+    checkoutStatuses[prop]=snap.val()||{};
     render();
   });
 });
@@ -473,16 +485,22 @@ function shiftsArr(){return Object.entries(getCurShifts()).map(([id,s])=>({...s,
 window.switchProp=function(prop){
   curProp=prop;
   expanded.clear();
-  const props=["ohana","yahiro"];
+  const props=["ohana","yahiro","nikko"];
   props.forEach(p=>{
     const btn=document.getElementById("propBtn-"+p);
     if(btn) btn.style.opacity=(p===prop)?"1":"0.45";
   });
   // icalState is per-property
   if(!window._icalByProp) window._icalByProp={};
-  window._icalByProp[prop===props[0]?props[1]:props[0]]=icalState.map(x=>({...x}));
+  if(!window._icalBookingByProp) window._icalBookingByProp={};
+  // Save current prop's ical state
+  window._icalByProp[curProp]=icalState.map(x=>({...x}));
+  window._icalBookingByProp[curProp]=icalStateBooking.map(x=>({...x}));
+  // Load new prop's ical state
   if(window._icalByProp[prop]) icalState=window._icalByProp[prop];
   else icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+  if(window._icalBookingByProp[prop]) icalStateBooking=window._icalBookingByProp[prop];
+  else icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
   const now=new Date();
   selYM=selYM||(now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0"));
   render();
@@ -491,7 +509,7 @@ window.switchProp=function(prop){
 // ── TAB ──
 function setTab(t){
   tab=t;
-  ["shifts","ical","done","remind","mremind","settings"].forEach(x=>{
+  ["shifts","ical","co","done","remind","mremind","settings"].forEach(x=>{
     const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);
     if(te)te.classList.toggle("on",x===t);
     if(ne)ne.classList.toggle("on",x===t);
@@ -520,7 +538,7 @@ function getMonths(conf){
 }
 function renderMbar(conf){
   const bar=document.getElementById("mbar");
-  if(tab==="ical"||tab==="settings"){bar.classList.add("hidden");return}
+  if(tab==="ical"||tab==="settings"||tab==="co"){bar.classList.add("hidden");return}
   bar.classList.remove("hidden");
   const ms=getMonths(conf);
   if(ms.length&&!ms.includes(selYM))selYM=ms[0];
@@ -559,6 +577,7 @@ function render(){
     return;
   }
   if(tab==="ical"){renderMbar(false);renderIcal(el);return}
+  if(tab==="co"){document.getElementById("mbar").classList.add("hidden");renderCO(el);return}
   if(tab==="settings"){document.getElementById("mbar").classList.add("hidden");renderSettings(el);return}
   if(tab==="remind"){document.getElementById("mbar").classList.add("hidden");renderRemind(el);return}
   if(tab==="mremind"){document.getElementById("mbar").classList.add("hidden");renderMonthlyRemind(el);return}
@@ -566,7 +585,7 @@ function render(){
   const conf=tab==="done";
   const staff=getCurSettings().staff||[];
   let html="";
-  const curHi=curProp==="ohana"?0:1;
+  const curHi=curProp==="ohana"?0:curProp==="yahiro"?1:2;
   HOUSES.forEach((h,hi)=>{
     if(hi!==curHi) return;
     const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM)
@@ -624,7 +643,7 @@ function renderMonthlyRemind(el){
         txt+="\n";
       });
     }
-    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_ohana.html`;
+    txt+=`\nシフトアプリ: https://tiny-sawine-5a9d7e.netlify.app/staff.html`;
     return txt.trim();
   }
 
@@ -674,6 +693,72 @@ window.copyMonthlyLineText=function(){
   });
 };
 
+
+function renderCO(el){
+  const today=new Date();today.setHours(0,0,0,0);
+  const todayStr=fmtDate(today);
+  const weekEnd=fmtDate(addDays(today,6));
+  const WD=["日","月","火","水","木","金","土"];
+  const coStatuses=checkoutStatuses[curProp]||{};
+  const shifts=allShifts[curProp]||{};
+  const allShiftArr=Object.entries(shifts).map(([id,s])=>({...s,id}));
+  const allCO=allShiftArr.filter(s=>s.date>=todayStr&&s.date<=weekEnd&&!s.confirmed).sort((a,b)=>a.date.localeCompare(b.date)||a.hi-b.hi);
+  const pending=allCO.filter(s=>(coStatuses[`${s.date}_${s.hi}`]||"ng")==="ng").length;
+  const alertHtml=pending>0?`<div style="background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);margin-bottom:12px">⚠️ 清掃が未手配の物件が${pending}件あります！</div>`:"";
+  const statHtml=`<div style="display:flex;gap:8px;margin-bottom:12px">
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${allCO.filter(s=>s.date===todayStr).length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">本日CO</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--go)">${allCO.filter(s=>(coStatuses[s.date+"_"+s.hi]||"ng")==="ok").length}</div><div style="font-size:10px;color:var(--sub);font-weight:700">清掃確認済</div></div>
+    <div style="flex:1;background:#fff;border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)"><div style="font-size:22px;font-weight:900;color:var(--ng)">${pending}</div><div style="font-size:10px;color:var(--sub);font-weight:700">要手配</div></div>
+  </div>`;
+  const groups={};
+  allCO.forEach(s=>{if(!groups[s.date])groups[s.date]=[];groups[s.date].push(s)});
+  let cardsHtml="";
+  Object.keys(groups).sort().forEach(date=>{
+    const d=new Date(date+"T00:00:00");
+    const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
+    cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
+    groups[date].forEach(s=>{
+      const propMap={ohana:{name:"オハナ",icon:"🌺",color:"#E91E8C"},yahiro:{name:"八広",icon:"🏠",color:"#1565C0"},nikko:{name:"日光",icon:"🌿",color:"#2E7D32"}};
+      const hName=propMap[curProp]?.name||curProp;
+      const hIcon=propMap[curProp]?.icon||"🏠";
+      const hColor=propMap[curProp]?.color||"#333";
+      const key=`${s.date}_${s.hi}`;
+      const st=coStatuses[key]||"ng";
+      const stMap={
+        ok:{dot:"var(--go)",txt:"var(--go)",lbl:"清掃確認済 ✅",btnLbl:"完了済み",btnBg:"#EBEBEB",btnColor:"var(--sub)"},
+        warn:{dot:"var(--maybe)",txt:"var(--maybe)",lbl:"手配済・未確認 ⏳",btnLbl:"確認する",btnBg:"var(--maybe)",btnColor:"#fff"},
+        ng:{dot:"var(--ng)",txt:"var(--ng)",lbl:"未手配 ❌",btnLbl:"今すぐ手配",btnBg:"var(--ng)",btnColor:"#fff"},
+      };
+      const sm=stMap[st]||stMap.ng;
+      cardsHtml+=`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:18px">${hIcon}</span>
+          <span style="font-size:14px;font-weight:900;flex:1">${hName}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--sub);background:#F3F3F3;padding:3px 9px;border-radius:8px">${s.te||"11:00"} CO</span>
+        </div>
+        <div style="padding:9px 13px;display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700">
+            <span style="width:8px;height:8px;border-radius:50%;background:${sm.dot};display:inline-block"></span>
+            <span style="color:${sm.txt}">${sm.lbl}</span>
+          </div>
+          <button onclick="cycleCOStatus('${curProp}','${key}')" style="border:none;border-radius:20px;font-size:11px;font-weight:800;font-family:inherit;padding:6px 14px;cursor:pointer;background:${sm.btnBg};color:${sm.btnColor}">${sm.btnLbl}</button>
+        </div>
+      </div>`;
+    });
+  });
+  if(!allCO.length) cardsHtml=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:10px">✅</div><div style="font-size:14px;font-weight:700">今週のチェックアウトなし</div></div>`;
+  el.innerHTML=alertHtml+statHtml+cardsHtml;
+}
+
+window.cycleCOStatus=function(prop,key){
+  const cur=(checkoutStatuses[prop]||{})[key]||"ng";
+  const next=cur==="ng"?"warn":cur==="warn"?"ok":"ng";
+  setSyncStatus(false);
+  set(ref(db,`${prop}/checkoutStatuses/${key}`),next).then(()=>{setSyncStatus(true);toast(next==="ok"?"✅ 清掃確認済":next==="warn"?"⏳ 手配済":"❌ 未手配に戻しました")});
+};
+
+function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
 
 function renderRemind(el){
   const today=new Date();
@@ -832,7 +917,7 @@ window.syncIcal=async function(hi){
   if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
   try{
-   const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw 0;
     const text=await res.text();
     const evs=parseIcal(text,"airbnb");
@@ -846,7 +931,26 @@ window.syncIcal=async function(hi){
   }
   render();
 };
-function parseIcal(text){
+window.syncBooking=async function(hi){
+  const url=icalStateBooking[hi].url.trim();
+  if(!url){toast("URLを入力してください");return}
+  icalStateBooking[hi].status="loading";render();
+  try{
+    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok)throw 0;
+    const text=await res.text();
+    const evs=parseIcal(text,"booking");
+    if(!evs.length)throw 0;
+    icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
+    toast(`Booking.com：${evs.length}件取得しました`);
+  }catch{
+    icalStateBooking[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"}));
+    icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";
+    toast("デモデータで表示しています");
+  }
+  render();
+};
+function parseIcal(text,source="airbnb"){
   return text.split("BEGIN:VEVENT").slice(1).map(b=>{
     const m=b.match(/DTEND[^:\r\n]*:(\d{8})/)||b.match(/DTEND[^:\r\n]*:(\d{8})T/);
     const sm=b.match(/SUMMARY:(.+)/);
@@ -854,12 +958,20 @@ function parseIcal(text){
     const raw=m[1].slice(0,8);
     const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T00:00:00");
     d.setDate(d.getDate()-1);
-    return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約"};
+    return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
 }
 window.makeShifts=function(hi){
   const evs=icalState[hi].events;
   if(!evs.length){toast("先に同期してください");return}
+  makeShiftsFromEvs(hi,evs);
+};
+window.makeShiftsAll=function(hi){
+  const allEvs=[...icalState[hi].events,...icalStateBooking[hi].events];
+  if(!allEvs.length){toast("先に同期してください");return}
+  makeShiftsFromEvs(hi,allEvs);
+};
+function makeShiftsFromEvs(hi,evs){
   const staff=getCurSettings().staff||[];
   let added=0;
   evs.forEach(ev=>{
@@ -867,36 +979,60 @@ window.makeShifts=function(hi){
     if(!exists){
       const id=`shift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
       const v={};staff.forEach(s=>v[s]="");
-      saveShiftToDB(id,{hi,date:ev.date,ts:"10:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,ci:false,lo:false,eci:false});
+      saveShiftToDB(id,{hi,date:ev.date,ts:"10:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,source:ev.source||"airbnb",ci:false,lo:false,eci:false});
       added++;
     }
   });
   toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");
   setTab("shifts");
-};
+}
 function renderIcal(el){
-  let html=`<div class="howto"><div class="howto-ttl">📖 AirbnbのiCal URLの取得方法</div><ol>
-    <li>Airbnb管理画面 → <strong>カレンダー</strong> を開く</li>
-    <li>右上の<strong>「空き状況をエクスポート」</strong>をタップ</li>
-    <li>iCal URLをコピーして下に貼り付け</li>
-    <li><strong>「同期」</strong>ボタンを押す</li>
-  </ol></div>`;
+  let html=`
+  <div class="howto">
+    <div class="howto-ttl">📖 iCal URLの取得方法</div>
+    <ol>
+      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」</li>
+      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」</li>
+      <li>URLをコピーして下に貼り付け →「同期」ボタンを押す</li>
+    </ol>
+  </div>`;
   HOUSES.forEach((h,hi)=>{
-    const st=icalState[hi];
-    const stTxt=st.status==="ok"?(st.error==="demo"?"デモデータ表示中":`${st.events.length}件同期済み`):st.status==="loading"?"同期中...":"未設定";
-    const dc=st.status==="ok"?"ok":st.status==="loading"?"loading":"";
-    const evRows=st.events.slice(0,4).map(ev=>`<div class="ical-ev"><span class="ev-date">${fd(ev.date)}</span><span class="ev-name">${ev.summary}</span><span class="ev-tag">CO</span></div>`).join("");
-    const more=st.events.length>4?`<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:3px">他${st.events.length-4}件</div>`:"";
+    const stA=icalState[hi];
+    const stB=icalStateBooking[hi];
+    const stTxtA=stA.status==="ok"?(stA.error==="demo"?"デモデータ":`${stA.events.length}件`):stA.status==="loading"?"同期中...":"未設定";
+    const stTxtB=stB.status==="ok"?(stB.error==="demo"?"デモデータ":`${stB.events.length}件`):stB.status==="loading"?"同期中...":"未設定";
+    const dcA=stA.status==="ok"?"ok":stA.status==="loading"?"loading":"";
+    const dcB=stB.status==="ok"?"ok":stB.status==="loading"?"loading":"";
+    // Merge events from both sources
+    const allEvs=[...stA.events,...stB.events].sort((a,b)=>a.date.localeCompare(b.date));
+    const evRows=allEvs.slice(0,5).map(ev=>`<div class="ical-ev"><span class="ev-date">${fd(ev.date)}</span><span class="ev-name">${ev.summary}</span><span class="ev-tag" style="background:${ev.source==='booking'?'#003580':'#FF5A5F'};color:#fff">${ev.source==='booking'?'BK':'AB'}</span></div>`).join("");
+    const more=allEvs.length>5?`<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:3px">他${allEvs.length-5}件</div>`:"";
     html+=`<div class="ical-card">
-      <div class="ical-head"><div class="ical-ico">${h.icon}</div>
-        <div><div class="ical-ttl">${h.name}</div><div class="ical-sub">Airbnb カレンダー連携</div></div>
+      <div class="ical-head">
+        <div class="ical-ico">${h.icon}</div>
+        <div><div class="ical-ttl">${h.name}</div><div class="ical-sub">予約サイト連携</div></div>
       </div>
-      <div class="ical-st"><div class="stdot ${dc}"></div><span class="sttxt">${stTxt}</span></div>
-      <div class="ical-row">
-       <input class="ical-inp" id="iu-${hi}" placeholder="iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
-        <button class="ical-btn" onclick="syncIcal(${hi})" ${st.status==="loading"?"disabled":""}>同期</button>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--airbnb);margin-bottom:5px;display:flex;align-items:center;gap:6px">
+          <span>🏠 Airbnb</span>
+          <div class="stdot ${dcA}"></div><span class="sttxt">${stTxtA}</span>
+        </div>
+        <div class="ical-row">
+          <input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
+          <button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
+        </div>
       </div>
-      ${st.events.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShifts(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">
+          <span>🏨 Booking.com</span>
+          <div class="stdot ${dcB}"></div><span class="sttxt">${stTxtB}</span>
+        </div>
+        <div class="ical-row">
+          <input class="ical-inp" id="ib-${hi}" placeholder="Booking.com iCal URLを貼り付け" value="${stB.url}" oninput="icalStateBooking[${hi}].url=this.value" style="border-color:#003580">
+          <button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button>
+        </div>
+      </div>
+      ${allEvs.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShiftsAll(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
     </div>`;
   });
   el.innerHTML=html;
@@ -1087,7 +1223,7 @@ function buildOpts(sel){return HOUSES.map((h,i)=>`<option value="${i}" ${i===sel
 window.openAdd=function(hi){
   editingId=null;
   document.getElementById("modalTitle").textContent="清掃予定を追加";
-  const defaultHi=curProp==="ohana"?0:1;
+  const defaultHi=curProp==="ohana"?0:curProp==="yahiro"?1:2;
   document.getElementById("fHouse").innerHTML=buildOpts(hi>=0?hi:defaultHi);
   document.getElementById("fDate").value=new Date().toISOString().slice(0,10);
   document.getElementById("fTimeS").value="10:00";
