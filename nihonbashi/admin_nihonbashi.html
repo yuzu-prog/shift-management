@@ -945,11 +945,26 @@ window.syncIcal=async function(hi){
   icalState[hi].url=url;
   saveIcalUrl(curProp,hi,"airbnb",url);
   icalState[hi].status="loading";render();
+  const proxies=[
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  ];
+  let text="";
+  for(const proxy of proxies){
+    try{
+      const res=await fetch(proxy,{signal:AbortSignal.timeout(10000)});
+      if(!res.ok)continue;
+      const ct=res.headers.get("content-type")||"";
+      if(ct.includes("json")){
+        const data=await res.json();
+        text=data.contents||"";
+      } else {
+        text=await res.text();
+      }
+      if(text.includes("BEGIN:VCALENDAR"))break;
+    }catch{continue}
+  }
   try{
-    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(10000)});
-    if(!res.ok)throw 0;
-    const data=await res.json();
-    const text=data.contents||"";
     const evs=parseIcal(text,"airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
@@ -968,11 +983,26 @@ window.syncBooking=async function(hi){
   icalStateBooking[hi].url=url;
   saveIcalUrl(curProp,hi,"booking",url);
   icalStateBooking[hi].status="loading";render();
+  const proxies=[
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  ];
+  let text="";
+  for(const proxy of proxies){
+    try{
+      const res=await fetch(proxy,{signal:AbortSignal.timeout(10000)});
+      if(!res.ok)continue;
+      const ct=res.headers.get("content-type")||"";
+      if(ct.includes("json")){
+        const data=await res.json();
+        text=data.contents||"";
+      } else {
+        text=await res.text();
+      }
+      if(text.includes("BEGIN:VCALENDAR"))break;
+    }catch{continue}
+  }
   try{
-    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(10000)});
-    if(!res.ok)throw 0;
-    const data=await res.json();
-    const text=data.contents||"";
     const evs=parseIcal(text,"booking");
     if(!evs.length)throw 0;
     icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
@@ -995,6 +1025,27 @@ function parseIcal(text,source="airbnb"){
     return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
 }
+// ── iCSファイルをアップロードして読み込む ──
+window.loadIcsFile=function(hi,type,input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    const evs=parseIcal(text,type);
+    if(!evs.length){toast("予約データが見つかりませんでした");return}
+    if(type==="airbnb"){
+      icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
+      toast(`Airbnb：${evs.length}件読み込みました`);
+    } else {
+      icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
+      toast(`Booking.com：${evs.length}件読み込みました`);
+    }
+    render();
+  };
+  reader.readAsText(file);
+};
+
 window.makeShifts=function(hi){
   const evs=icalState[hi].events;
   if(!evs.length){toast("先に同期してください");return}
@@ -1023,11 +1074,10 @@ function makeShiftsFromEvs(hi,evs){
 function renderIcal(el){
   let html=`
   <div class="howto">
-    <div class="howto-ttl">📖 iCal URLの取得方法</div>
+    <div class="howto-ttl">📖 予約データの読み込み方法</div>
     <ol>
-      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」</li>
-      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」</li>
-      <li>URLをコピーして下に貼り付け →「同期」ボタンを押す</li>
+      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」→ URLをブラウザで開く → ダウンロードされた.icsファイルをアップロード</li>
+      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」→ 同様に.icsファイルをアップロード</li>
     </ol>
   </div>`;
   HOUSES.forEach((h,hi)=>{
@@ -1055,6 +1105,10 @@ function renderIcal(el){
           <input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
           <button class="ical-btn" onclick="icalState[${hi}].url=document.getElementById('iu-${hi}').value;syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
         </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;background:#FFF5F5;border:1.5px dashed #FF5A5F;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;color:var(--airbnb)">
+          📂 .icsファイルをアップロード
+          <input type="file" accept=".ics" style="display:none" onchange="loadIcsFile(${hi},'airbnb',this)">
+        </label>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">
@@ -1065,6 +1119,10 @@ function renderIcal(el){
           <input class="ical-inp" id="ib-${hi}" placeholder="Booking.com iCal URLを貼り付け" value="${stB.url}" oninput="icalStateBooking[${hi}].url=this.value" style="border-color:#003580">
           <button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="icalStateBooking[${hi}].url=document.getElementById('ib-${hi}').value;syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button>
         </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;background:#EEF4FF;border:1.5px dashed #003580;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;color:#003580">
+          📂 .icsファイルをアップロード
+          <input type="file" accept=".ics" style="display:none" onchange="loadIcsFile(${hi},'booking',this)">
+        </label>
       </div>
       ${allEvs.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShiftsAll(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
     </div>`;
