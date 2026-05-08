@@ -832,7 +832,7 @@ window.syncIcal=async function(hi){
   if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
   try{
-    const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+   const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw 0;
     const text=await res.text();
     const evs=parseIcal(text,"airbnb");
