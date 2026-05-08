@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>チェックアウト管理 | 清掃シフト</title>
+<title>チェックアウト管理 | 葛飾</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -16,8 +16,6 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:90px}
-
-/* ── HEADER ── */
 .hdr{background:var(--ink);padding:14px 16px 12px;position:sticky;top:0;z-index:100}
 .hdr-row{display:flex;align-items:center;justify-content:space-between}
 .hdr h1{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:7px}
@@ -28,8 +26,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .sync-dot.syncing{background:#FFB300;animation:blink 1s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .sync-txt{font-size:10px;color:rgba(255,255,255,.55);font-weight:700}
-
-/* ── WEEK STRIP ── */
 .week-wrap{background:var(--card);border-bottom:1px solid #EBEBEB;padding:10px 14px 12px;position:sticky;top:66px;z-index:90}
 .week-month{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
 .today-btn{background:var(--airbnb);color:#fff;border:none;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer}
@@ -45,8 +41,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .day-dot{width:5px;height:5px;border-radius:50%;background:var(--airbnb)}
 .day-pill.active .day-dot{background:#fff}
 .day-spacer{width:5px;height:5px}
-
-/* ── STATS ── */
 .stats-row{display:flex;gap:8px;padding:12px 14px 4px}
 .stat-card{flex:1;background:var(--card);border-radius:14px;padding:11px 8px;text-align:center;box-shadow:var(--sh)}
 .stat-num{font-size:24px;font-weight:900}
@@ -54,47 +48,32 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .stat-num.green{color:var(--go)}
 .stat-num.gold{color:var(--maybe)}
 .stat-lbl{font-size:10px;color:var(--sub);font-weight:700;margin-top:2px}
-
-/* ── ALERT ── */
 .alert-bar{margin:8px 14px 0;background:var(--ng-bg);border:1.5px solid var(--ng);border-radius:12px;padding:9px 13px;font-size:12px;font-weight:700;color:var(--ng);display:flex;align-items:center;gap:7px}
-
-/* ── TABS ── */
 .tabs{display:flex;background:var(--card);border-bottom:1px solid #EBEBEB;margin-top:8px}
 .tab{flex:1;border:none;background:none;padding:10px 2px;font-size:11px;font-weight:700;font-family:inherit;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
 .tab.on{color:var(--ink);border-bottom-color:var(--ink)}
-
-/* ── SECTION LABEL ── */
 .sec-lbl{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;padding:14px 14px 6px;display:flex;align-items:center;gap:8px}
 .sec-lbl::after{content:'';flex:1;height:1px;background:#E0E0E0}
-
-/* ── CHECKOUT CARD ── */
 .co-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);margin:0 14px 10px;overflow:hidden;animation:slideIn .25s ease both}
 @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
 .co-card-hdr{display:flex;align-items:center;gap:9px;padding:11px 13px 10px;border-bottom:1px solid #F0F0F0}
 .area-tag{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.03em}
-.tag-akasaka{background:#FFE9EA;color:var(--airbnb)}
-.tag-katsushika{background:#E0F5EE;color:var(--go)}
+.tag-akasaka{background:#E0F5EE;color:var(--go)}
 .co-prop{font-size:14px;font-weight:900;flex:1}
 .co-time{font-size:12px;font-weight:700;color:var(--sub);background:#F3F3F3;padding:3px 9px;border-radius:8px}
-
 .co-body{display:flex;align-items:center;gap:11px;padding:10px 13px}
 .guest-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .guest-name{font-size:13px;font-weight:800}
 .guest-meta{font-size:11px;color:var(--sub);display:flex;gap:10px;margin-top:2px}
-
 .co-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:#FAFAFA;border-top:1px solid #F0F0F0}
 .cleaning-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700}
 .st-dot{width:8px;height:8px;border-radius:50%}
 .st-ok{background:var(--go)}.st-ng{background:var(--ng)}.st-warn{background:var(--maybe)}
 .st-ok-txt{color:var(--go)}.st-ng-txt{color:var(--ng)}.st-warn-txt{color:var(--maybe)}
-
 .action-btn{border:none;border-radius:20px;font-size:11px;font-weight:800;font-family:inherit;padding:6px 14px;cursor:pointer;transition:opacity .2s}
 .btn-arrange{background:var(--ng);color:#fff}
 .btn-confirm{background:var(--maybe);color:#fff}
 .btn-done{background:#EBEBEB;color:var(--sub)}
-
-/* ── SHIFT LINK CARD ── */
 .shift-link-card{background:linear-gradient(135deg,#1A1A1E,#2a2a35);border-radius:var(--r);margin:0 14px 10px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-decoration:none;transition:opacity .2s;box-shadow:var(--sh)}
 .shift-link-card:active{opacity:.85}
 .shift-link-ico{width:40px;height:40px;border-radius:12px;background:var(--airbnb);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
@@ -102,22 +81,14 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .shift-link-ttl{font-size:13px;font-weight:900;color:#fff}
 .shift-link-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px}
 .shift-link-arr{font-size:16px;color:rgba(255,255,255,.4)}
-
-/* ── EMPTY ── */
 .empty{text-align:center;padding:48px 24px;color:var(--sub)}
 .empty-ico{font-size:36px;margin-bottom:10px}
 .empty-ttl{font-size:14px;font-weight:700}
 .empty-sub{font-size:11px;margin-top:4px}
-
-/* ── BOTTOM NAV ── */
 .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid #EBEBEB;display:flex;padding:7px 0 13px;z-index:100}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--sub);font-size:10px;font-weight:700}
-
-/* ── TOAST ── */
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;border-radius:22px;padding:9px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── MODAL (清掃手配) ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:#fff;border-radius:22px 22px 0 0;padding:18px 18px 36px;width:100%;max-width:460px;animation:modalUp .28s ease}
@@ -141,11 +112,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="hdr">
   <div class="hdr-row">
-    <h1><span class="ab-dot"></span>チェックアウト管理</h1>
-    <a href="https://yuzu-prog.github.io/shift-management/shift/admin.html" class="back-btn">← シフト管理</a>
+    <h1><span class="ab-dot"></span>チェックアウト管理 | 葛飾</h1>
+    <a href="https://yuzu-prog.github.io/shift-management/akasaka/admin.html" class="back-btn">← 管理画面</a>
   </div>
   <div class="sync-row">
     <div class="sync-dot" id="syncDot"></div>
@@ -153,7 +123,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   </div>
 </div>
 
-<!-- WEEK STRIP -->
 <div class="week-wrap">
   <div class="week-month">
     <span id="monthLabel"></span>
@@ -162,7 +131,6 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <div class="week-strip" id="weekStrip"></div>
 </div>
 
-<!-- STATS -->
 <div class="stats-row">
   <div class="stat-card"><div class="stat-num red" id="statCO">—</div><div class="stat-lbl">本日CO</div></div>
   <div class="stat-card"><div class="stat-num gold" id="statTmr">—</div><div class="stat-lbl">明日CO</div></div>
@@ -170,10 +138,8 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <div class="stat-card"><div class="stat-num red" id="statPend">—</div><div class="stat-lbl">要手配</div></div>
 </div>
 
-<!-- ALERT -->
 <div class="alert-bar" id="alertBar" style="display:none">⚠️ 清掃が未手配の物件があります！</div>
 
-<!-- TABS -->
 <div class="tabs">
   <button class="tab on" id="tab-today"    onclick="setTabView('today',this)">本日</button>
   <button class="tab"    id="tab-tomorrow" onclick="setTabView('tomorrow',this)">明日</button>
@@ -181,17 +147,14 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
   <button class="tab"    id="tab-all"      onclick="setTabView('all',this)">すべて</button>
 </div>
 
-<!-- MAIN -->
 <div id="cardArea"></div>
 
-<!-- BOTTOM NAV -->
 <div class="bnav">
-  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/shift/admin.html'"><span style="font-size:20px">🏠</span>シフト</button>
-  <button class="nb" style="color:var(--ink)" onclick=""><span style="font-size:20px">📅</span>CO管理</button>
-  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/shift/staff.html'"><span style="font-size:20px">👤</span>スタッフ</button>
+  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/akasaka/admin.html'"><span style="font-size:20px">🏠</span>管理画面</button>
+  <button class="nb" style="color:var(--ink)"><span style="font-size:20px">📅</span>CO管理</button>
+  <button class="nb" onclick="location.href='https://yuzu-prog.github.io/shift-management/akasaka/staff.html'"><span style="font-size:20px">👤</span>スタッフ</button>
 </div>
 
-<!-- CLEANING STATUS MODAL -->
 <div class="overlay" id="modalOverlay">
   <div class="modal">
     <div class="m-handle"></div>
@@ -204,11 +167,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
       <button class="m-status-btn warn" id="mBtnWarn" onclick="pickStatus('warn')">⏳<br>手配済<br>未確認</button>
       <button class="m-status-btn ok" id="mBtnOk" onclick="pickStatus('ok')">✅<br>清掃<br>確認済</button>
     </div>
-    <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">シフト管理へ</div>
-    <a href="https://yuzu-prog.github.io/shift-management/shift/admin.html" class="shift-link-card" style="margin:0 0 14px">
+    <div style="font-size:12px;font-weight:700;color:var(--sub);margin-bottom:8px">管理画面へ</div>
+    <a href="https://yuzu-prog.github.io/shift-management/akasaka/admin.html" class="shift-link-card" style="margin:0 0 14px">
       <div class="shift-link-ico">📋</div>
       <div class="shift-link-txt">
-        <div class="shift-link-ttl">清掃シフト管理を開く</div>
+        <div class="shift-link-ttl">葛飾シフト管理を開く</div>
         <div class="shift-link-sub">スタッフへの依頼・確認はこちら</div>
       </div>
       <span class="shift-link-arr">›</span>
@@ -220,10 +183,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase + Logic -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",
@@ -238,34 +200,43 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ── CONSTANTS ──
 const HOUSES = [
-  { name:"NEO",    icon:"🏠", color:"#FF4081", area:"akasaka",    tag:"tag-akasaka",    label:"赤坂" },
-  { name:"ZEN",    icon:"🍃", color:"#607D8B", area:"akasaka",    tag:"tag-akasaka",    label:"赤坂" },
-  { name:"MIYABI", icon:"🌸", color:"#1A237E", area:"katsushika", tag:"tag-katsushika", label:"葛飾" },
+  { name:"NEO",    icon:"🏠", color:"#FF4081", tag:"tag-akasaka", label:"赤坂" },
+  { name:"ZEN",    icon:"🍃", color:"#607D8B", tag:"tag-akasaka", label:"赤坂" },
+  { name:"MIYABI", icon:"🌸", color:"#1A237E", tag:"tag-akasaka", label:"赤坂" },
 ];
+const PROP_KEYS = ["neo","zen","miyabi"];
 const WD = ["日","月","火","水","木","金","土"];
 const GUEST_EMOJIS = ["👩","👨","🧑","👩‍💼","👨‍💼","🧔","👩‍🦰","👱","🧕","👲"];
 const SAMPLE_GUESTS = ["田中さん","Kenji M.","Sarah K.","鈴木さん","Lena W.","Mike T.","佐藤さん","Emma R."];
 
-// ── STATE ──
-let shifts = {}, settings = {}, checkoutStatuses = {};
+let allShifts = {}, allSettings = {}, checkoutStatuses = {};
 let dbReady = false;
 let currentTabView = "today";
 let selectedDate = fmtDate(new Date());
 let modalTargetId = null, modalPickedStatus = null;
 
-// ── FIREBASE ──
-onValue(ref(db,"shifts"), snap => {
-  shifts = snap.val() || {};
-  if (dbReady) render();
+// Firebase listeners - 各物件のシフトを購読
+let loadedCount = 0;
+const TOTAL = PROP_KEYS.length;
+
+PROP_KEYS.forEach(prop => {
+  onValue(ref(db, `akasaka/${prop}/shifts`), snap => {
+    allShifts[prop] = snap.val() || {};
+    loadedCount++;
+    if (loadedCount >= TOTAL && !dbReady) {
+      dbReady = true;
+      setSyncStatus(true);
+      initUI();
+    } else if (dbReady) render();
+  });
+  onValue(ref(db, `akasaka/${prop}/settings`), snap => {
+    allSettings[prop] = snap.val() || {};
+    if (dbReady) render();
+  });
 });
-onValue(ref(db,"settings"), snap => {
-  settings = snap.val() || {};
-  if (!dbReady) { dbReady = true; initUI(); }
-  else render();
-});
-onValue(ref(db,"checkoutStatuses"), snap => {
+
+onValue(ref(db, "akasaka/checkoutStatuses"), snap => {
   checkoutStatuses = snap.val() || {};
   if (dbReady) render();
 });
@@ -277,7 +248,6 @@ function setSyncStatus(ok) {
   else { dot.classList.add("syncing"); txt.textContent = "保存中..."; }
 }
 
-// ── UTILS ──
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -289,87 +259,47 @@ function toast(msg) {
   setTimeout(() => t.classList.remove("show"), 2200);
 }
 
-// ── GENERATE CHECKOUT LIST ──
-// チェックアウト = シフトのある日（fromAirbnb or 通常） + checkoutStatuses
 function getCheckouts() {
-  const today = new Date(); today.setHours(0,0,0,0);
   const list = [];
-
-  // Firebaseのシフトからチェックアウト日を生成
-  Object.entries(shifts).forEach(([id, s]) => {
-    if (!s || !s.date) return;
-    const d = new Date(s.date+"T00:00:00");
-    const hi = s.hi ?? 0;
-    const h = HOUSES[hi] || HOUSES[0];
-    const statusKey = `${s.date}_${hi}`;
-    const status = (checkoutStatuses[statusKey] || "ng");
-    const gi = (d.getDate() + hi) % GUEST_EMOJIS.length;
-    list.push({
-      id: statusKey,
-      date: s.date,
-      prop: h,
-      hi,
-      time: s.te || "11:00",
-      guest: s.guestName || SAMPLE_GUESTS[(d.getDate() + hi) % SAMPLE_GUESTS.length],
-      emoji: GUEST_EMOJIS[gi],
-      nights: 2 + (d.getDate() % 4),
-      cleaning: status,
-      fromAirbnb: s.fromAirbnb || false,
-      confirmed: s.confirmed || false,
-    });
-  });
-
-  // シフトがない場合はサンプルデータで補完（デモ）
-  if (list.length === 0) {
-    const propList = [
-      { hi: 0, offset: 0 },
-      { hi: 2, offset: 0 },
-      { hi: 1, offset: 1 },
-      { hi: 0, offset: 2 },
-      { hi: 2, offset: 3 },
-      { hi: 1, offset: 4 },
-      { hi: 0, offset: 5 },
-    ];
-    const statuses = ["ng","warn","ok","ok","warn","ok","ok"];
-    propList.forEach((p, i) => {
-      const d = addDays(today, p.offset);
-      const h = HOUSES[p.hi];
-      const statusKey = `${fmtDate(d)}_${p.hi}`;
+  PROP_KEYS.forEach((prop, hi) => {
+    const shifts = allShifts[prop] || {};
+    Object.entries(shifts).forEach(([id, s]) => {
+      if (!s || !s.date) return;
+      const h = HOUSES[hi];
+      const statusKey = `${s.date}_${prop}`;
+      const status = checkoutStatuses[statusKey] || "ng";
+      const d = new Date(s.date+"T00:00:00");
+      const gi = (d.getDate() + hi) % GUEST_EMOJIS.length;
       list.push({
         id: statusKey,
-        date: fmtDate(d),
+        date: s.date,
         prop: h,
-        hi: p.hi,
-        time: "11:00",
-        guest: SAMPLE_GUESTS[i % SAMPLE_GUESTS.length],
-        emoji: GUEST_EMOJIS[i % GUEST_EMOJIS.length],
-        nights: 2 + i % 4,
-        cleaning: checkoutStatuses[statusKey] || statuses[i],
-        fromAirbnb: i % 2 === 0,
-        confirmed: i > 2,
+        hi,
+        propKey: prop,
+        time: s.te || "11:00",
+        guest: s.guestName || SAMPLE_GUESTS[(d.getDate() + hi) % SAMPLE_GUESTS.length],
+        emoji: GUEST_EMOJIS[gi],
+        nights: 2 + (d.getDate() % 4),
+        cleaning: status,
+        fromAirbnb: s.fromAirbnb || false,
+        confirmed: s.confirmed || false,
       });
     });
-  }
-
+  });
   return list.sort((a,b) => a.date.localeCompare(b.date) || a.hi - b.hi);
 }
 
-// ── INIT ──
 function initUI() {
-  setSyncStatus(true);
   buildWeekStrip();
   render();
 }
 
-// ── WEEK STRIP ──
 function buildWeekStrip() {
   const today = new Date(); today.setHours(0,0,0,0);
   const checkouts = getCheckouts();
   const strip = document.getElementById("weekStrip");
   const months = ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"];
-  document.getElementById("monthLabel").textContent =
-    `${today.getFullYear()}年 ${months[today.getMonth()]}`;
-
+  document.getElementById("monthLabel").textContent = `${today.getFullYear()}年 ${months[today.getMonth()]}`;
   let html = "";
   for (let i = -1; i <= 8; i++) {
     const d = addDays(today, i);
@@ -390,7 +320,6 @@ function buildWeekStrip() {
 window.selectDay = function(ds) {
   selectedDate = ds;
   buildWeekStrip();
-  // Override tab to show selected day
   renderCards(getCheckouts().filter(c => c.date === ds));
 };
 
@@ -400,17 +329,15 @@ window.goToday = function() {
   setTabView('today', document.getElementById('tab-today'));
 };
 
-// ── TABS ──
 window.setTabView = function(view, el) {
   currentTabView = view;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   el.classList.add('on');
-  selectedDate = fmtDate(new Date()); // reset to today on tab change
+  selectedDate = fmtDate(new Date());
   buildWeekStrip();
   render();
 };
 
-// ── RENDER ──
 function render() {
   const today = new Date(); today.setHours(0,0,0,0);
   const todayStr = fmtDate(today);
@@ -418,21 +345,18 @@ function render() {
   const weekEndStr = fmtDate(addDays(today, 6));
   const all = getCheckouts();
 
-  // Stats
   document.getElementById("statCO").textContent = all.filter(c => c.date === todayStr).length;
   document.getElementById("statTmr").textContent = all.filter(c => c.date === tomorrowStr).length;
   document.getElementById("statOk").textContent = all.filter(c => c.cleaning === "ok" && c.date >= todayStr).length;
   document.getElementById("statPend").textContent = all.filter(c => c.cleaning === "ng" && c.date >= todayStr).length;
 
-  // Alert
   const hasNg = all.some(c => c.cleaning === "ng" && c.date >= todayStr && c.date <= weekEndStr);
   document.getElementById("alertBar").style.display = hasNg ? "flex" : "none";
 
-  // Filter by tab
   let filtered;
-  if (currentTabView === "today")    filtered = all.filter(c => c.date === todayStr);
+  if (currentTabView === "today")         filtered = all.filter(c => c.date === todayStr);
   else if (currentTabView === "tomorrow") filtered = all.filter(c => c.date === tomorrowStr);
-  else if (currentTabView === "week") filtered = all.filter(c => c.date >= todayStr && c.date <= weekEndStr);
+  else if (currentTabView === "week")     filtered = all.filter(c => c.date >= todayStr && c.date <= weekEndStr);
   else filtered = all;
 
   renderCards(filtered);
@@ -444,25 +368,17 @@ function renderCards(list) {
     el.innerHTML = `<div class="empty"><div class="empty-ico">✅</div><div class="empty-ttl">チェックアウトなし</div><div class="empty-sub">この期間に予定はありません</div></div>`;
     return;
   }
-
-  // Group by date
   const groups = {};
   list.forEach(c => { if (!groups[c.date]) groups[c.date] = []; groups[c.date].push(c); });
-
   const today = fmtDate(new Date());
   const tomorrow = fmtDate(addDays(new Date(), 1));
-
   let html = "";
   Object.keys(groups).sort().forEach(date => {
     const d = new Date(date+"T00:00:00");
     const label = date === today ? `今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`
                 : date === tomorrow ? `明日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`
                 : `${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
-
-    if (Object.keys(groups).length > 1) {
-      html += `<div class="sec-lbl">${label}</div>`;
-    }
-
+    if (Object.keys(groups).length > 1) html += `<div class="sec-lbl">${label}</div>`;
     groups[date].forEach((c, i) => {
       const stMap = {
         ok:   { dot:"st-ok",   txt:"st-ok-txt",   label:"清掃確認済 ✅", btnLabel:"完了済み",   btnCls:"btn-done" },
@@ -499,37 +415,31 @@ function renderCards(list) {
         </div>`;
     });
   });
-
-  // シフト管理へのリンク
   html += `
     <div class="sec-lbl">清掃手配</div>
-    <a href="https://yuzu-prog.github.io/shift-management/shift/admin.html" class="shift-link-card">
+    <a href="https://yuzu-prog.github.io/shift-management/akasaka/admin.html" class="shift-link-card">
       <div class="shift-link-ico">📋</div>
       <div class="shift-link-txt">
-        <div class="shift-link-ttl">清掃シフト管理を開く</div>
+        <div class="shift-link-ttl">葛飾シフト管理を開く</div>
         <div class="shift-link-sub">スタッフへのシフト依頼・確認はこちら</div>
       </div>
       <span class="shift-link-arr">›</span>
     </a>`;
-
   el.innerHTML = html;
 }
 
-// ── MODAL ──
 window.openModal = function(id, propName, date, hi, currentStatus) {
   modalTargetId = id;
   modalPickedStatus = currentStatus;
   document.getElementById("modalPropName").textContent = `${HOUSES[hi].icon} ${propName}`;
   document.getElementById("modalDate").textContent = `チェックアウト日：${dispDate(date)}`;
-
-  // 物件情報
-  const propInfo = ((settings.propInfo || {})[hi]) || {};
+  const propKey = PROP_KEYS[hi];
+  const propInfo = ((allSettings[propKey] || {}).propInfo || {})[hi] || {};
   let infoHtml = "";
   if (propInfo.lock)    infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">🔐 スマートロック</span><span class="m-prop-val">${propInfo.lock}</span></div>`;
   if (propInfo.keybox)  infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">🗝 キーボックス</span><span class="m-prop-val">${propInfo.keybox}</span></div>`;
   if (propInfo.address) infoHtml += `<div class="m-prop-row"><span class="m-prop-lbl">📍 住所</span><span class="m-prop-val">${propInfo.address}</span></div>`;
   document.getElementById("modalPropInfo").innerHTML = infoHtml || `<div style="font-size:12px;color:var(--sub)">物件情報は設定画面から登録できます</div>`;
-
   updateModalBtns(currentStatus);
   document.getElementById("modalOverlay").classList.add("open");
 };
@@ -549,7 +459,7 @@ window.pickStatus = function(status) {
 window.saveStatus = function() {
   if (!modalTargetId || !modalPickedStatus) { closeModal(); return; }
   setSyncStatus(false);
-  set(ref(db, `checkoutStatuses/${modalTargetId}`), modalPickedStatus)
+  set(ref(db, `akasaka/checkoutStatuses/${modalTargetId}`), modalPickedStatus)
     .then(() => { setSyncStatus(true); toast("✅ ステータスを更新しました"); });
   closeModal();
 };
