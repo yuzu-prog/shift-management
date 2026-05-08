@@ -912,7 +912,22 @@ function renderDetail(s,staff){
 }
 
 // ── iCAL ──
-window.syncIcal=async function(hi){
+// ── iCAL URL をFirebaseに保存・読み込み ──
+function saveIcalUrl(prop,hi,type,url){
+  set(ref(db,`${prop}/icalUrls/${hi}/${type}`),url);
+}
+function loadIcalUrls(){
+  PROPERTY_KEYS.forEach(prop=>{
+    onValue(ref(db,`${prop}/icalUrls`),snap=>{
+      const data=snap.val()||{};
+      HOUSES.forEach((_,hi)=>{
+        if(data[hi]?.airbnb) icalState[hi].url=data[hi].airbnb;
+        if(data[hi]?.booking) icalStateBooking[hi].url=data[hi].booking;
+      });
+    });
+  });
+}
+loadIcalUrls();window.syncIcal=async function(hi){
   const url=icalState[hi].url.trim();
   if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
@@ -923,7 +938,7 @@ window.syncIcal=async function(hi){
     const evs=parseIcal(text,"airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-    toast(`Airbnb：${evs.length}件取得しました`);
+    saveIcalUrl(curProp,hi,"airbnb",url);toast(`Airbnb：${evs.length}件取得しました`);
   }catch{
     icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"}));
     icalState[hi].status="ok";icalState[hi].error="demo";
@@ -942,7 +957,7 @@ window.syncBooking=async function(hi){
     const evs=parseIcal(text,"booking");
     if(!evs.length)throw 0;
     icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
-    toast(`Booking.com：${evs.length}件取得しました`);
+    saveIcalUrl(curProp,hi,"booking",url);toast(`Booking.com：${evs.length}件取得しました`);
   }catch{
     icalStateBooking[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"}));
     icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";
