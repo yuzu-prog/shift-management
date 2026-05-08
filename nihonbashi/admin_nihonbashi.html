@@ -832,15 +832,15 @@ window.syncIcal=async function(hi){
   if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
   try{
-    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    const res=await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw 0;
-    const data=await res.json();
-    const evs=parseIcal(data.contents||"");
+    const text=await res.text();
+    const evs=parseIcal(text,"airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-    toast(`${HOUSES[hi].name}：${evs.length}件取得しました`);
+    toast(`Airbnb：${evs.length}件取得しました`);
   }catch{
-    icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`}));
+    icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"}));
     icalState[hi].status="ok";icalState[hi].error="demo";
     toast("デモデータで表示しています");
   }
