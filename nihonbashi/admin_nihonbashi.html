@@ -911,34 +911,49 @@ function renderDetail(s,staff){
   return abB+ciB+loB+eciB+timmyB+editL+`<div class="vgrid">${rows}</div>${bot}`;
 }
 
-// ── iCAL ──
 // ── iCAL URL をFirebaseに保存・読み込み ──
 function saveIcalUrl(prop,hi,type,url){
   set(ref(db,`${prop}/icalUrls/${hi}/${type}`),url);
 }
-function loadIcalUrls(){
-  PROPERTY_KEYS.forEach(prop=>{
-    onValue(ref(db,`${prop}/icalUrls`),snap=>{
-      const data=snap.val()||{};
-      HOUSES.forEach((_,hi)=>{
-        if(data[hi]?.airbnb) icalState[hi].url=data[hi].airbnb;
-        if(data[hi]?.booking) icalStateBooking[hi].url=data[hi].booking;
-      });
+// 全物件のiCal URLをFirebaseから読み込む
+PROPERTY_KEYS.forEach(prop=>{
+  onValue(ref(db,`${prop}/icalUrls`),snap=>{
+    const data=snap.val()||{};
+    HOUSES.forEach((_,hi)=>{
+      if(data[hi]?.airbnb){
+        icalState[hi].url=data[hi].airbnb;
+        if(!window._icalByProp) window._icalByProp={};
+        if(!window._icalByProp[prop]) window._icalByProp[prop]=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+        window._icalByProp[prop][hi].url=data[hi].airbnb;
+      }
+      if(data[hi]?.booking){
+        icalStateBooking[hi].url=data[hi].booking;
+        if(!window._icalBookingByProp) window._icalBookingByProp={};
+        if(!window._icalBookingByProp[prop]) window._icalBookingByProp[prop]=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+        window._icalBookingByProp[prop][hi].url=data[hi].booking;
+      }
     });
+    render();
   });
-}
-loadIcalUrls();window.syncIcal=async function(hi){
-  const url=icalState[hi].url.trim();
+});
+
+// ── iCAL ──
+window.syncIcal=async function(hi){
+  const urlInput=document.getElementById("iu-"+hi);
+  const url=(urlInput?urlInput.value.trim():icalState[hi].url.trim());
   if(!url){toast("URLを入力してください");return}
+  icalState[hi].url=url;
+  saveIcalUrl(curProp,hi,"airbnb",url);
   icalState[hi].status="loading";render();
   try{
-    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(10000)});
     if(!res.ok)throw 0;
-    const text=await res.text();
+    const data=await res.json();
+    const text=data.contents||"";
     const evs=parseIcal(text,"airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-    saveIcalUrl(curProp,hi,"airbnb",url);toast(`Airbnb：${evs.length}件取得しました`);
+    toast(`Airbnb：${evs.length}件取得しました`);
   }catch{
     icalState[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"}));
     icalState[hi].status="ok";icalState[hi].error="demo";
@@ -947,17 +962,21 @@ loadIcalUrls();window.syncIcal=async function(hi){
   render();
 };
 window.syncBooking=async function(hi){
-  const url=icalStateBooking[hi].url.trim();
+  const urlInput=document.getElementById("ib-"+hi);
+  const url=(urlInput?urlInput.value.trim():icalStateBooking[hi].url.trim());
   if(!url){toast("URLを入力してください");return}
+  icalStateBooking[hi].url=url;
+  saveIcalUrl(curProp,hi,"booking",url);
   icalStateBooking[hi].status="loading";render();
   try{
-    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(10000)});
     if(!res.ok)throw 0;
-    const text=await res.text();
+    const data=await res.json();
+    const text=data.contents||"";
     const evs=parseIcal(text,"booking");
     if(!evs.length)throw 0;
     icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
-    saveIcalUrl(curProp,hi,"booking",url);toast(`Booking.com：${evs.length}件取得しました`);
+    toast(`Booking.com：${evs.length}件取得しました`);
   }catch{
     icalStateBooking[hi].events=DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"}));
     icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";
