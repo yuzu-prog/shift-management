@@ -893,7 +893,7 @@ function renderIcal(el){
       </div>
       <div class="ical-st"><div class="stdot ${dc}"></div><span class="sttxt">${stTxt}</span></div>
       <div class="ical-row">
-        <input class="ical-inp" id="iu-${hi}" placeholder="iCal URLを貼り付け" value="${st.url}" <input class="ical-inp" id="iu-${hi}" placeholder="iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
+       <input class="ical-inp" id="iu-${hi}" placeholder="iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
         <button class="ical-btn" onclick="syncIcal(${hi})" ${st.status==="loading"?"disabled":""}>同期</button>
       </div>
       ${st.events.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShifts(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
