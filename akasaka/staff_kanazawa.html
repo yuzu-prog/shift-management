@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>金澤 | 赤坂 清掃シフト</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;--go:#00956A;--go-bg:#E0F5EE;--ng:#D42B22;--ng-bg:#FDECEA;--maybe:#D08000;--maybe-bg:#FEF3C7;--airbnb:#FF5A5F;--ci:#4338CA;--ci-bg:#EEF2FF;--lo:#B45309;--lo-bg:#FEF3C7;--eci:#0369A1;--eci-bg:#E0F2FE;--r:16px;--sh:0 2px 14px rgba(0,0,0,.07)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:82px}
+.hdr{background:var(--ink);padding:14px 16px 11px;position:sticky;top:0;z-index:100}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.hdr h1{font-size:16px;font-weight:900;color:#fff;display:flex;align-items:center;gap:6px}
+.ab-dot{width:8px;height:8px;border-radius:50%;background:#E53935}
+.staff-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);background:#E53935;border-radius:20px;padding:4px 10px}
+.sync-indicator{font-size:10px;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px;margin-top:4px}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:#4CAF50}
+.sync-dot.syncing{background:#FFB300;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #EBEBEB;position:sticky;top:66px;z-index:90}
+.tab{flex:1;border:none;background:none;padding:10px 2px;font-size:11px;font-weight:700;font-family:inherit;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab.on{color:var(--ink);border-bottom-color:var(--ink)}
+.mbar{background:#fff;border-bottom:1px solid #EBEBEB;padding:7px 10px;position:sticky;top:110px;z-index:89;display:flex;align-items:center;gap:6px}
+.mbar.hidden{display:none}
+.marr{background:none;border:1.5px solid #E0E0E0;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0}
+.main{padding:12px}
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:12px;color:var(--sub)}
+.loading-spinner{width:36px;height:36px;border:3px solid #EEE;border-top-color:var(--ink);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mstrip{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1}
+.mstrip::-webkit-scrollbar{display:none}
+.mmbtn{flex-shrink:0;border:1.5px solid #E0E0E0;background:#FAFAFA;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;color:var(--sub);white-space:nowrap;transition:all .2s}
+.mmbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.mcnt{font-size:10px;color:var(--sub);flex-shrink:0;white-space:nowrap}
+.house-sec{margin-bottom:14px}
+.house-hdr{display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:var(--r) var(--r) 0 0}
+.house-icon{font-size:18px}
+.house-name{font-size:15px;font-weight:900;color:#fff;flex:1;letter-spacing:.5px}
+.house-cnt{font-size:10px;font-weight:700;background:rgba(255,255,255,.25);border-radius:8px;padding:2px 8px;color:#fff}
+.slist{background:var(--card);border-radius:0 0 var(--r) var(--r);box-shadow:var(--sh);overflow:hidden}
+.sempty{padding:20px;text-align:center;color:var(--sub);font-size:12px}
+.sitem{border-bottom:1px solid #F0F0F0}
+.sitem:last-child{border-bottom:none}
+.srow{display:flex;align-items:center;gap:7px;padding:10px 14px;cursor:pointer}
+.srow:active{background:#F9F9F9}
+.ab-src{width:6px;height:6px;border-radius:50%;background:var(--airbnb);flex-shrink:0}
+.mn-src{width:6px;height:6px;border-radius:50%;background:#CCC;flex-shrink:0}
+.sdate{font-size:13px;font-weight:800;min-width:66px}
+.stime{font-size:10px;color:var(--sub);min-width:62px}
+.spills{display:flex;gap:4px;flex:1;flex-wrap:wrap;align-items:center}
+.pill{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px}
+.pill.go{background:var(--go-bg);color:var(--go)}
+.pill.ng{background:var(--ng-bg);color:var(--ng)}
+.pill.maybe{background:var(--maybe-bg);color:var(--maybe)}
+.pill.ci{background:var(--ci-bg);color:var(--ci)}
+.pill.lo{background:var(--lo-bg);color:var(--lo)}
+.pill.eci{background:var(--eci-bg);color:var(--eci)}
+.chev{font-size:11px;color:#CCC;transition:transform .2s;flex-shrink:0}
+.chev.open{transform:rotate(90deg)}
+.go-names{font-size:11px;font-weight:700;color:var(--go);margin-top:3px;padding-left:2px}
+.prop-info-card{background:#FFFDF5;border:1.5px solid #FFE9A0;border-radius:0;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.prop-item{display:flex;align-items:flex-start;gap:8px}
+.prop-lbl{font-size:11px;font-weight:700;color:var(--sub);min-width:100px;flex-shrink:0}
+.prop-val{font-size:12px;font-weight:700;color:var(--ink);word-break:break-all}
+.sdetail{display:none;padding:4px 14px 14px}
+.sdetail.open{display:block;animation:fd .18s ease}
+@keyframes fd{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+.ab-badge{display:flex;align-items:center;gap:6px;background:#FFF5F5;border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--airbnb);font-weight:700}
+.ci-badge{display:flex;align-items:center;gap:6px;background:var(--ci-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--ci);font-weight:700}
+.lo-badge{display:flex;align-items:center;gap:6px;background:var(--lo-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--lo);font-weight:700}
+.eci-badge{display:flex;align-items:center;gap:6px;background:var(--eci-bg);border-radius:8px;padding:7px 10px;margin-bottom:8px;font-size:11px;color:var(--eci);font-weight:700}
+.vgrid{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.vrow{display:flex;align-items:center;gap:6px}
+.nmpill{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:24px;border-radius:20px;font-size:11px;font-weight:800;color:#fff;padding:0 10px;flex-shrink:0}
+.mybtns{display:flex;gap:6px;flex:1}
+.mbtn{flex:1;border:2px solid #E4E4E4;background:#F9F9F9;border-radius:10px;padding:9px 3px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer;color:var(--sub);text-align:center;line-height:1.4;transition:all .15s}
+.mbtn.go.on{background:var(--go-bg);border-color:var(--go);color:var(--go)}
+.mbtn.maybe.on{background:var(--maybe-bg);border-color:var(--maybe);color:var(--maybe)}
+.mbtn.ng.on{background:var(--ng-bg);border-color:var(--ng);color:var(--ng)}
+.vr-icon{font-size:14px;width:20px;text-align:center}
+.vr-st{font-size:11px;color:var(--sub)}
+.cfm-tag{text-align:center;font-size:12px;font-weight:800;color:var(--go);padding:4px 0;background:var(--go-bg);border-radius:8px}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #EBEBEB;display:flex;padding:7px 0 13px;z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--sub)}
+.nb.on{color:var(--ink)}
+.nb-icon{font-size:20px}
+.nb-lbl{font-size:10px;font-weight:700}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;border-radius:22px;padding:9px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <h1><span class="ab-dot"></span>赤坂 清掃シフト</h1>
+    <span class="staff-label">金澤</span>
+  </div>
+  <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncTxt">接続中</span></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" id="tab-shifts" onclick="setTab('shifts')">🏠 全体</button>
+  <button class="tab"    id="tab-mine"   onclick="setTab('mine')">👤 自分</button>
+  <button class="tab"    id="tab-done"   onclick="setTab('done')">✅ 確定済み</button>
+</div>
+
+<div class="mbar hidden" id="mbar">
+  <button class="marr" onclick="shiftMonth(-1)">‹</button>
+  <div class="mstrip" id="mstrip"></div>
+  <button class="marr" onclick="shiftMonth(1)">›</button>
+  <span class="mcnt" id="mcnt"></span>
+</div>
+
+<div class="main" id="main">
+  <div class="loading-screen"><div class="loading-spinner"></div><span>接続中...</span></div>
+</div>
+
+<div class="bnav">
+  <button class="nb on" id="nb-shifts" onclick="setTab('shifts')"><span class="nb-icon">🏠</span><span class="nb-lbl">全体</span></button>
+  <button class="nb"    id="nb-mine"   onclick="setTab('mine')">  <span class="nb-icon">👤</span><span class="nb-lbl">自分</span></button>
+  <button class="nb"    id="nb-done"   onclick="setTab('done')">  <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;align-items:center;justify-content:center" onclick="closePhoto()">
+  <img id="photoModalImg" src="" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain">
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig={apiKey:"AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",authDomain:"shiftmanagement-b01bd.firebaseapp.com",projectId:"shiftmanagement-b01bd",storageBucket:"shiftmanagement-b01bd.firebasestorage.app",messagingSenderId:"405322282736",appId:"1:405322282736:web:a31507bfa42ad6e52cb435",databaseURL:"https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const ME="金澤";
+const MY_COLOR="#E53935";
+
+const HOUSES=[
+  {name:"NEO",icon:"🏙",color:"#1A237E"},
+  {name:"ZEN",icon:"🌿",color:"#2E7D32"},
+  {name:"MIYABI",icon:"🌸",color:"#AD1457"},
+  
+];
+const PROP_KEYS=["shogun","yuzuki","hikari","choco"];
+const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
+const WD=["日","月","火","水","木","金","土"];
+
+let allShifts={shogun:{},yuzuki:{},hikari:{},choco:{}};
+let allSettings={shogun:{staff:[],staffColors:[]},yuzuki:{staff:[],staffColors:[]},hikari:{staff:[],staffColors:[]},choco:{staff:[],staffColors:[]}};
+let tab="shifts",selYM="",expanded=new Set(),dbReady=false;
+let loadedCount=0;
+const TOTAL=PROP_KEYS.length*2;
+
+function checkReady(){
+  loadedCount++;
+  if(loadedCount>=TOTAL&&!dbReady){
+    dbReady=true;
+    const now=new Date();
+    selYM=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+    setSyncStatus(true);
+    render();
+  } else if(dbReady){render();}
+}
+
+PROP_KEYS.forEach(prop=>{
+  onValue(ref(db,"akasaka/"+prop+"/shifts"),snap=>{allShifts[prop]=snap.val()||{};checkReady();});
+  onValue(ref(db,"akasaka/"+prop+"/settings"),snap=>{if(snap.val())allSettings[prop]=snap.val();if(!allSettings[prop].staffColors)allSettings[prop].staffColors=[];if(!allSettings[prop].staff)allSettings[prop].staff=[];checkReady();});
+});
+
+function getStaffColor(prop,name){const idx=(allSettings[prop].staff||[]).indexOf(name);return idx>=0?(allSettings[prop].staffColors||[])[idx]||PALETTE[idx%PALETTE.length]:PALETTE[0];}
+function fd(s){const d=new Date(s+"T00:00:00");return(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";}
+function ym(s){return s.slice(0,7);}
+function yml(y){const[yr,mo]=y.split("-");return yr+"年"+parseInt(mo)+"月";}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+function shiftsForProp(prop){return Object.entries(allShifts[prop]||{}).map(([id,s])=>({...s,id,prop}));}
+function allShiftsArr(){return PROP_KEYS.flatMap(p=>shiftsForProp(p));}
+function setSyncStatus(ok){const dot=document.getElementById("syncDot"),txt=document.getElementById("syncTxt");if(!dot)return;if(ok){dot.classList.remove("syncing");txt.textContent="同期済み";}else{dot.classList.add("syncing");txt.textContent="保存中...";}}
+function counts(v,staff){let g=0,m=0,n=0,b=0;staff.forEach(s=>{const x=(v||{})[s]||"";x==="go"?g++:x==="maybe"?m++:x==="ng"?n++:b++;});return{g,m,n,b};}
+
+window.setTab=function(t){tab=t;["shifts","mine","done"].forEach(x=>{const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);if(te)te.classList.toggle("on",x===t);if(ne)ne.classList.toggle("on",x===t);});render();};
+function getMonths(conf){const s2=new Set();allShiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));return[...s2].sort();}
+function renderMbar(conf){const bar=document.getElementById("mbar");bar.classList.remove("hidden");const ms=getMonths(conf);if(ms.length&&!ms.includes(selYM))selYM=ms[0];document.getElementById("mstrip").innerHTML=ms.map(m=>'<button class="mmbtn '+(m===selYM?"on":"")+'" onclick="selMonth(\''+m+'\')">'+yml(m)+"</button>").join("");const cnt=allShiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;document.getElementById("mcnt").textContent=cnt+"件";setTimeout(()=>{const a=document.querySelector(".mmbtn.on");if(a)a.scrollIntoView({inline:"center",block:"nearest"});},50);}
+window.selMonth=function(m){selYM=m;renderMbar(tab==="done");render();};
+window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selYM),n=i+d;if(n>=0&&n<ms.length)window.selMonth(ms[n]);};
+window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render();};
+window.castVote=function(id,prop,v){const cur=((allShifts[prop][id]||{}).votes||{})[ME]||"";const newV=cur===v?"":v;setSyncStatus(false);update(ref(db,"akasaka/"+prop+"/shifts/"+id+"/votes"),{[ME]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！");});};
+window.openPhoto=function(url){document.getElementById("photoModalImg").src=url;document.getElementById("photoModal").style.display="flex";};
+window.closePhoto=function(){document.getElementById("photoModal").style.display="none";};
+
+function getPropInfoHTML(prop,hi){const propInfo=((allSettings[prop]||{}).propInfo||{})[hi]||{};const items=[];if(propInfo.lock)items.push('<div class="prop-item"><span class="prop-lbl">🔐 スマートロック</span><span class="prop-val">'+propInfo.lock+'</span></div>');if(propInfo.keybox)items.push('<div class="prop-item"><span class="prop-lbl">🗝 キーボックス</span><span class="prop-val">'+propInfo.keybox+'</span></div>');if(propInfo.address)items.push('<div class="prop-item"><span class="prop-lbl">📍 住所</span><span class="prop-val">'+propInfo.address+'</span></div>');if(propInfo.note)items.push('<div class="prop-item"><span class="prop-lbl">📝 備考</span><span class="prop-val">'+propInfo.note+'</span></div>');const photos=(propInfo.photos||[]).filter(p=>p.url);if(photos.length>0){const photoHTML=photos.map(p=>'<div style="margin-bottom:10px">'+(p.caption?'<div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px">📸 '+p.caption+'</div>':'')+'<img src="'+p.url+'" alt="" style="width:100%;border-radius:10px;object-fit:cover;max-height:220px;cursor:pointer" onclick="openPhoto(\''+p.url+'\')" onerror="this.style.display=\'none\'"></div>').join("");items.push('<div class="prop-item" style="flex-direction:column;align-items:flex-start"><span class="prop-lbl" style="margin-bottom:8px">📸 備品写真</span><div style="width:100%">'+photoHTML+'</div></div>');}if(!items.length)return"";return'<div class="prop-info-card">'+items.join("")+'</div>';}
+
+function render(){
+  const el=document.getElementById("main");
+  if(!dbReady)return;
+  const conf=tab==="done";
+  if(tab==="mine"){
+    renderMbar(false);
+    let html="";
+    PROP_KEYS.forEach((prop,hi)=>{
+      const h=HOUSES[hi];
+      const list=shiftsForProp(prop).filter(s=>!s.confirmed&&ym(s.date)===selYM&&(s.votes||{})[ME]==="go").sort((a,b)=>a.date.localeCompare(b.date));
+      if(!list.length)return;
+      html+='<div class="house-sec"><div class="house-hdr" style="background:'+h.color+'"><span class="house-icon">'+h.icon+'</span><span class="house-name">'+h.name+'</span><span class="house-cnt">'+list.length+'件</span></div>'+getPropInfoHTML(prop,hi)+'<div class="slist">'+list.map(s=>renderMyItem(s,prop)).join("")+'</div></div>';
+    });
+    if(!html)html='<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700">行けると回答したシフトはありません</div></div>';
+    el.innerHTML=html;setSyncStatus(true);return;
+  }
+  renderMbar(conf);
+  let html="";
+  PROP_KEYS.forEach((prop,hi)=>{
+    const h=HOUSES[hi];
+    const staff=allSettings[prop].staff||[];
+    const list=shiftsForProp(prop).filter(s=>conf?s.confirmed:!s.confirmed).filter(s=>ym(s.date)===selYM).sort((a,b)=>a.date.localeCompare(b.date));
+    const items=list.length?list.map(s=>renderItem(s,prop,staff)).join(""):'<div class="sempty">予定なし</div>';
+    html+='<div class="house-sec"><div class="house-hdr" style="background:'+h.color+'"><span class="house-icon">'+h.icon+'</span><span class="house-name">'+h.name+'</span><span class="house-cnt">'+list.length+'件</span></div>'+getPropInfoHTML(prop,hi)+'<div class="slist">'+items+'</div></div>';
+  });
+  el.innerHTML=html;setSyncStatus(true);
+}
+
+function renderMyItem(s,prop){const tStr=s.te?s.ts+"〜"+s.te:s.ts;const cfmTag=s.confirmed?'<span class="pill go">✅確定</span>':'<span class="pill go">⭕行ける</span>';return'<div class="sitem"><div class="srow" onclick="toggleExpand(\''+s.id+'\')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">'+fd(s.date)+'</span><span class="stime">'+tStr+'</span><div class="spills">'+cfmTag+(s.ci?'<span class="pill ci">🏠CI</span>':'')+(s.lo?'<span class="pill lo">✈️LO</span>':'')+(s.eci?'<span class="pill eci">👜ECI</span>':'')+'</div></div></div><span class="chev '+(expanded.has(s.id)?"open":"")+'">▶</span></div><div class="sdetail '+(expanded.has(s.id)?"open":"")+'">'+( expanded.has(s.id)?renderDetail(s,prop):"")+' </div></div>';}
+
+function renderItem(s,prop,staff){const v=s.votes||{},c=counts(v,staff),isOpen=expanded.has(s.id);const tStr=s.te?s.ts+"〜"+s.te:s.ts;const myV=v[ME]||"";const myPill=myV==="go"?'<span class="pill go">⭕自分</span>':myV==="maybe"?'<span class="pill maybe">△自分</span>':myV==="ng"?'<span class="pill ng">✕自分</span>':"";const goNames=staff.filter(st=>(v[st]||"")==="go");const goNamesStr=goNames.length>0?'<div class="go-names">✅ '+goNames.join("・")+'</div>':"";return'<div class="sitem"><div class="srow" onclick="toggleExpand(\''+s.id+'\')">'+(s.fromAirbnb?'<span class="ab-src"></span>':'<span class="mn-src"></span>')+'<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">'+fd(s.date)+'</span><span class="stime">'+tStr+'</span><div class="spills"><span class="pill go">⭕'+c.g+'</span><span class="pill maybe">△'+c.m+'</span><span class="pill ng">✕'+c.n+'</span>'+myPill+(s.ci?'<span class="pill ci">🏠CI</span>':'')+(s.lo?'<span class="pill lo">✈️LO</span>':'')+(s.eci?'<span class="pill eci">👜ECI</span>':'')+'</div></div>'+goNamesStr+'</div><span class="chev '+(isOpen?"open":"")+'">▶</span></div><div class="sdetail '+(isOpen?"open":"")+'">'+( isOpen?renderDetail(s,prop):"")+' </div></div>';}
+
+function renderDetail(s,prop){const v=s.votes||{};const cur=v[ME]||"";const staff=allSettings[prop].staff||[];const abB=s.fromAirbnb?'<div class="ab-badge">✈️ Airbnbより自動作成'+(s.guestName?" — "+s.guestName:"")+'</div>':"";const ciB=s.ci?'<div class="ci-badge">🏠 当日チェックインあり</div>':"";const loB=s.lo?'<div class="lo-badge">✈️ レイトアウトあり</div>':"";const eciB=s.eci?'<div class="eci-badge">👜 アーリーチェックインあり</div>':"";const myRow='<div class="vrow" style="margin-bottom:12px"><span class="nmpill" style="background:'+MY_COLOR+'">'+ME+'</span><div class="mybtns"><button class="mbtn go '+(cur==="go"?"on":"")+'" onclick="castVote(\''+s.id+'\',\''+prop+'\',\'go\')">⭕<br>行ける</button><button class="mbtn maybe '+(cur==="maybe"?"on":"")+'" onclick="castVote(\''+s.id+'\',\''+prop+'\',\'maybe\')">△<br>未定</button><button class="mbtn ng '+(cur==="ng"?"on":"")+'" onclick="castVote(\''+s.id+'\',\''+prop+'\',\'ng\')">✕<br>無理</button></div></div>';const others=staff.filter(st=>st!==ME).map(st=>{const vv=v[st]||"";const icon=vv==="go"?"⭕":vv==="maybe"?"△":vv==="ng"?"✕":"—";const c2=getStaffColor(prop,st);return'<div class="vrow"><span class="nmpill" style="background:'+c2+'">'+st+'</span><span class="vr-icon">'+icon+'</span><span class="vr-st">'+(vv==="go"?"行ける":vv==="maybe"?"未定":vv==="ng"?"無理":"未回答")+'</span></div>';}).join("");const cfm=s.confirmed?'<div class="cfm-tag">✅ このシフトは確定済みです</div>':"";return abB+ciB+loB+eciB+'<div class="vgrid">'+myRow+others+'</div>'+cfm;}
+</script>
+</body>
+</html>
