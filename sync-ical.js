@@ -35,6 +35,11 @@ function parseIcal(text) {
     const sm = b.match(/SUMMARY:(.+)/);
     if (!m) return null;
     const summary = sm ? sm[1].trim() : '';
+    const ds = b.match(/DTSTART[^:\r\n]*:(\d{8})/);
+    if (!ds) return null;
+    const startRaw = ds[1].slice(0, 8);
+    const endRaw = m[1].slice(0, 8);
+    if (startRaw === endRaw) return null;
     if (!summary.toLowerCase().includes('reserved')) return null;
     const raw = m[1].slice(0, 8);
     const d = new Date(raw.slice(0,4) + '-' + raw.slice(4,6) + '-' + raw.slice(6,8) + 'T00:00:00Z');
