@@ -28,18 +28,20 @@ const PROPERTIES = [
   },
 ];
 
-// iCalをパース
+// iCalをパース（Reservedのみ取得）
 function parseIcal(text) {
   return text.split('BEGIN:VEVENT').slice(1).map(b => {
     const m = b.match(/DTEND[^:\r\n]*:(\d{8})/) || b.match(/DTEND[^:\r\n]*:(\d{8})T/);
     const sm = b.match(/SUMMARY:(.+)/);
     if (!m) return null;
+    const summary = sm ? sm[1].trim() : '';
+    if (!summary.toLowerCase().includes('reserved')) return null;
     const raw = m[1].slice(0, 8);
     const d = new Date(raw.slice(0,4) + '-' + raw.slice(4,6) + '-' + raw.slice(6,8) + 'T00:00:00Z');
     d.setDate(d.getDate() - 1);
     return {
       date: d.toISOString().slice(0, 10),
-      summary: sm ? sm[1].trim() : '予約',
+      summary,
       source: 'airbnb',
     };
   }).filter(Boolean);
