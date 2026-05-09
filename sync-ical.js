@@ -45,7 +45,7 @@ function parseIcal(text) {
     const diffDays = (endDate - startDate) / (1000*60*60*24);
     if (diffDays < 2) return null; // 1泊未満は除外
     const d = new Date(endRaw.slice(0,4) + '-' + endRaw.slice(4,6) + '-' + endRaw.slice(6,8) + 'T00:00:00Z');
-   // d.setDate(d.getDate() - 1); // DTENDがそのままチェックアウト日
+    return {
       date: d.toISOString().slice(0, 10),
       summary,
       source: 'airbnb',
