@@ -35,14 +35,16 @@ function parseIcal(text) {
     const sm = b.match(/SUMMARY:(.+)/);
     if (!m) return null;
     const summary = sm ? sm[1].trim() : '';
+    if (!summary.toLowerCase().includes('reserved')) return null;
     const ds = b.match(/DTSTART[^:\r\n]*:(\d{8})/);
     if (!ds) return null;
     const startRaw = ds[1].slice(0, 8);
     const endRaw = m[1].slice(0, 8);
-    if (startRaw === endRaw) return null;
-    if (!summary.toLowerCase().includes('reserved')) return null;
-    const raw = m[1].slice(0, 8);
-    const d = new Date(raw.slice(0,4) + '-' + raw.slice(4,6) + '-' + raw.slice(6,8) + 'T00:00:00Z');
+    const startDate = new Date(startRaw.slice(0,4)+'-'+startRaw.slice(4,6)+'-'+startRaw.slice(6,8));
+    const endDate = new Date(endRaw.slice(0,4)+'-'+endRaw.slice(4,6)+'-'+endRaw.slice(6,8));
+    const diffDays = (endDate - startDate) / (1000*60*60*24);
+    if (diffDays < 2) return null; // 1泊未満は除外
+    const d = new Date(endRaw.slice(0,4) + '-' + endRaw.slice(4,6) + '-' + endRaw.slice(6,8) + 'T00:00:00Z');
     d.setDate(d.getDate() - 1);
     return {
       date: d.toISOString().slice(0, 10),
