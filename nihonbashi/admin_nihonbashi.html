@@ -553,7 +553,7 @@ window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selY
 // ── VOTE ──
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
 window.setVote=function(id,s,v){
-  const sh=shifts[id];if(!sh)return;
+  const sh=getCurShifts()[id];if(!sh)return;
   const cur=(sh.votes||{})[s]||"";
   const newV=cur===v?"":v;
   updateVoteInDB(id,s,newV);
@@ -1332,7 +1332,7 @@ window.openAdd=function(hi){
   document.getElementById("addOverlay").classList.add("open");
 };
 window.openEdit=function(id){
-  const s=shifts[id];if(!s)return;
+  const s=getCurShifts()[id];if(!s)return;
   editingId=id;
   document.getElementById("modalTitle").textContent="清掃予定を編集";
   document.getElementById("fHouse").innerHTML=buildOpts(s.hi);
