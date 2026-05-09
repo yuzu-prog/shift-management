@@ -467,7 +467,7 @@ function confirmShiftInDB(id){
 }
 
 // ── UTILS ──
-function fd(s){const d=new Date(s+"T00:00:00");return(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";}
+function fd(s){const d=new Date(s+"T12:00:00");return(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";}
 function ym(s){return s.slice(0,7)}
 function yml(y){const[yr,mo]=y.split("-");return yr+"年"+parseInt(mo)+"月";}
 function sc(i){return getCurSettings().staffColors[i]||PALETTE[i%PALETTE.length]}
@@ -714,7 +714,7 @@ function renderCO(el){
   allCO.forEach(s=>{if(!groups[s.date])groups[s.date]=[];groups[s.date].push(s)});
   let cardsHtml="";
   Object.keys(groups).sort().forEach(date=>{
-    const d=new Date(date+"T00:00:00");
+    const d=new Date(date+"T12:00:00");
     const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
     cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
     groups[date].forEach(s=>{
@@ -768,7 +768,7 @@ function renderRemind(el){
 
   // 今日〜7日以内のシフトを取得（確定済み含む）
   const upcoming=shiftsArr().filter(s=>{
-    const d=new Date(s.date+"T00:00:00");
+    const d=new Date(s.date+"T12:00:00");
     return d>=today && d<=weekLater;
   }).sort((a,b)=>a.date.localeCompare(b.date));
 
@@ -782,7 +782,7 @@ function renderRemind(el){
     const goStaff=staff.filter(st=>v[st]==="go");
     const maybeStaff=staff.filter(st=>v[st]==="maybe");
     const ngStaff=staff.filter(st=>v[st]==="ng");
-    const daysLeft=Math.ceil((new Date(s.date+"T00:00:00")-today)/(1000*60*60*24));
+    const daysLeft=Math.ceil((new Date(s.date+"T12:00:00")-today)/(1000*60*60*24));
     const urgency=daysLeft<=2?"#D42B22":daysLeft<=4?"#D08000":"#00956A";
 
     return`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden">
@@ -1020,7 +1020,7 @@ function parseIcal(text,source="airbnb"){
     const sm=b.match(/SUMMARY:(.+)/);
     if(!m)return null;
     const raw=m[1].slice(0,8);
-    const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T00:00:00");
+    const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T12:00:00");
     
     return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
