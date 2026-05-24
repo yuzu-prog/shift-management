@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0046)file:///Users/yuzulemon/Downloads/staff_6.html -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>清掃シフト確認</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="./staff_files/css2" rel="stylesheet">
 <style>
 :root{
   --bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;
@@ -126,9 +126,9 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </div>
 
 <div class="tabs" id="tabBar" style="display:none">
-  <button class="tab on" id="tab-shifts"   onclick="setTab('shifts')">🏠 全体</button>
-  <button class="tab"    id="tab-mine"     onclick="setTab('mine')">👤 自分</button>
-  <button class="tab"    id="tab-done"     onclick="setTab('done')">✅ 確定済み</button>
+  <button class="tab on" id="tab-shifts" onclick="setTab(&#39;shifts&#39;)">🏠 全体</button>
+  <button class="tab" id="tab-mine" onclick="setTab(&#39;mine&#39;)">👤 自分</button>
+  <button class="tab" id="tab-done" onclick="setTab(&#39;done&#39;)">✅ 確定済み</button>
 </div>
 
 <div class="mbar hidden" id="mbar">
@@ -139,23 +139,23 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </div>
 
 <div class="main" id="main">
-  <div class="loading-screen">
-    <div class="loading-spinner"></div>
-    <span>接続中...</span>
-  </div>
-</div>
+        <div style="text-align:center;padding:48px 24px;color:var(--sub)">
+          <div style="font-size:36px;margin-bottom:12px">⚙️</div>
+          <div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div>
+          <div style="font-size:12px;margin-top:6px">しばらくお待ちください</div>
+        </div></div>
 
 <div class="bnav" id="bnav" style="display:none">
-  <button class="nb on" id="nb-shifts" onclick="setTab('shifts')"><span class="nb-icon">🏠</span><span class="nb-lbl">全体</span></button>
-  <button class="nb"    id="nb-mine"   onclick="setTab('mine')">  <span class="nb-icon">👤</span><span class="nb-lbl">自分</span></button>
-  <button class="nb"    id="nb-done"   onclick="setTab('done')">  <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
+  <button class="nb on" id="nb-shifts" onclick="setTab(&#39;shifts&#39;)"><span class="nb-icon">🏠</span><span class="nb-lbl">全体</span></button>
+  <button class="nb" id="nb-mine" onclick="setTab(&#39;mine&#39;)">  <span class="nb-icon">👤</span><span class="nb-lbl">自分</span></button>
+  <button class="nb" id="nb-done" onclick="setTab(&#39;done&#39;)">  <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <!-- 写真拡大モーダル -->
 <div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;align-items:center;justify-content:center" onclick="closePhoto()">
-  <img id="photoModalImg" src="" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain">
+  <img id="photoModalImg" src="file:///Users/yuzulemon/Downloads/staff_6.html" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain">
 </div>
 
 <script type="module">
@@ -183,55 +183,82 @@ const HOUSES=[
 const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
 const WD=["日","月","火","水","木","金","土"];
 
+const PROPS=["ohana","yahiro","nikko"];
 let allShifts={ohana:{},yahiro:{},nikko:{}};
-let settings={staff:[],staffColors:[]};
+let allSettingsData={ohana:null,yahiro:null,nikko:null};
+let settings={staff:[],staffColors:[],assigns:{},propInfo:{}};
 let me="", tab="shifts", selYM="", expanded=new Set(), dbReady=false;
 
 function getShifts(){
   const arr=[];
-  ["ohana","yahiro","nikko"].forEach(p=>{
+  PROPS.forEach(p=>{
     Object.entries(allShifts[p]||{}).forEach(([id,s])=>arr.push({...s,id,prop:p}));
   });
   return arr;
 }
 
-// Firebase listeners
-["ohana","yahiro","nikko"].forEach(prop=>{
+function mergeSettings(){
+  const allStaff=[],allColors=[];
+  const seen=new Set();
+  PROPS.forEach(p=>{
+    const s=allSettingsData[p];
+    if(!s||!s.staff)return;
+    s.staff.forEach((name,i)=>{
+      if(!seen.has(name)){
+        seen.add(name);
+        allStaff.push(name);
+        allColors.push((s.staffColors||[])[i]||"#999");
+      }
+    });
+  });
+  settings.staff=allStaff;
+  settings.staffColors=allColors;
+  if(allSettingsData.ohana){
+    settings.assigns=allSettingsData.ohana.assigns||{};
+    settings.propInfo=allSettingsData.ohana.propInfo||{};
+  }
+}
+
+// Firebase listeners - shifts
+PROPS.forEach(prop=>{
   onValue(ref(db,prop+"/shifts"), snap=>{
     allShifts[prop]=snap.val()||{};
     if(dbReady) render();
   });
 });
-onValue(ref(db,"ohana/settings"), snap=>{
-  if(snap.val()) settings=snap.val();
-  if(!settings.staffColors) settings.staffColors=[];
-  if(!settings.staff) settings.staff=[];
-  // 八広・日光のスタッフも追加
-  if(!dbReady){
-    dbReady=true;
-    const now=new Date();
-    selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-    if(settings.staff.length===0){
-      // スタッフ設定がまだない場合
-      document.getElementById("main").innerHTML=`
-        <div style="text-align:center;padding:48px 24px;color:var(--sub)">
-          <div style="font-size:36px;margin-bottom:12px">⚙️</div>
-          <div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div>
-          <div style="font-size:12px;margin-top:6px">しばらくお待ちください</div>
-        </div>`;
-      return;
-    }
-    const saved=localStorage.getItem("shiftMe");
-    if(saved && settings.staff.includes(saved)){
-      me=saved;
-      showApp();
+
+// Firebase listeners - settings (全物件)
+let settingsLoadedCount=0;
+PROPS.forEach(prop=>{
+  onValue(ref(db,prop+"/settings"), snap=>{
+    allSettingsData[prop]=snap.val()||{staff:[],staffColors:[]};
+    settingsLoadedCount++;
+    mergeSettings();
+    if(!dbReady){
+      dbReady=true;
+      const now=new Date();
+      selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      if(settings.staff.length===0){
+        document.getElementById("main").innerHTML=`
+          <div style="text-align:center;padding:48px 24px;color:var(--sub)">
+            <div style="font-size:36px;margin-bottom:12px">⚙️</div>
+            <div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div>
+            <div style="font-size:12px;margin-top:6px">しばらくお待ちください</div>
+          </div>`;
+        return;
+      }
+      const saved=localStorage.getItem("shiftMe");
+      if(saved && settings.staff.includes(saved)){
+        me=saved;
+        showApp();
+      } else {
+        showNameSelect();
+      }
     } else {
-      showNameSelect();
+      mergeSettings();
+      if(me) render();
     }
-  } else {
-    // 設定が更新された場合
-    if(me) render();
-  }
+  });
 });
 
 function sc(i){return settings.staffColors[i]||PALETTE[i%PALETTE.length]}
@@ -321,12 +348,8 @@ window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selY
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
 
 window.setVote=function(id,v){
-  let prop="ohana";
-  ["ohana","yahiro","nikko"].forEach(p=>{
-    if(allShifts[p]&&allShifts[p][id]) prop=p;
-  });
   setSyncStatus(false);
-  update(ref(db,`${prop}/shifts/${id}/votes`),{[me]:v})
+  update(ref(db,`shifts/${id}/votes`),{[me]:v==="current"?(((shifts[id]||{}).votes||{})[me]||"")===""?"":(((shifts[id]||{}).votes||{})[me]||""):v})
     .then(()=>setSyncStatus(true));
 };
 window.openPhoto=function(url){
@@ -338,11 +361,8 @@ window.closePhoto=function(){
   document.getElementById("photoModal").style.display="none";
 };
 window.castVote=function(id,v){
-  // どの物件のシフトか特定
   let prop="ohana";
-  ["ohana","yahiro","nikko"].forEach(p=>{
-    if(allShifts[p]&&allShifts[p][id]) prop=p;
-  });
+  PROPS.forEach(p=>{if(allShifts[p]&&allShifts[p][id])prop=p;});
   const cur=((allShifts[prop][id]||{}).votes||{})[me]||"";
   const newV=cur===v?"":v;
   setSyncStatus(false);
@@ -534,5 +554,6 @@ function renderDetail(s){
   return abB+ciB+loB+eciB+`<div class="vgrid">${myRow}${others}</div>${cfm}`;
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
