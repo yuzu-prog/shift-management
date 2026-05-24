@@ -321,8 +321,12 @@ window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selY
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
 
 window.setVote=function(id,v){
+  let prop="ohana";
+  ["ohana","yahiro","nikko"].forEach(p=>{
+    if(allShifts[p]&&allShifts[p][id]) prop=p;
+  });
   setSyncStatus(false);
-  update(ref(db,`ohana/shifts/${id}/votes`),{[me]:v==="current"?(((shifts[id]||{}).votes||{})[me]||"")===""?"":(((shifts[id]||{}).votes||{})[me]||""):v})
+  update(ref(db,`${prop}/shifts/${id}/votes`),{[me]:v})
     .then(()=>setSyncStatus(true));
 };
 window.openPhoto=function(url){
@@ -334,10 +338,15 @@ window.closePhoto=function(){
   document.getElementById("photoModal").style.display="none";
 };
 window.castVote=function(id,v){
-  const cur=((shifts[id]||{}).votes||{})[me]||"";
+  // どの物件のシフトか特定
+  let prop="ohana";
+  ["ohana","yahiro","nikko"].forEach(p=>{
+    if(allShifts[p]&&allShifts[p][id]) prop=p;
+  });
+  const cur=((allShifts[prop][id]||{}).votes||{})[me]||"";
   const newV=cur===v?"":v;
   setSyncStatus(false);
-  update(ref(db,`ohana/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
+  update(ref(db,`${prop}/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
 };
 
 function getPropInfoHTML(hi){
