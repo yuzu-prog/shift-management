@@ -175,6 +175,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+const VISIBLE_HOUSES=[1];
 const HOUSES=[
   {name:"オハナ",icon:"🌺",color:"#E91E8C",bg:"#FCE4F3"},
   {name:"八広", icon:"🏠",color:"#1565C0",bg:"#E3F2FD"},
@@ -410,6 +411,7 @@ function render(){
   let html="";
   HOUSES.forEach((h,hi)=>{
     if(!myHouses.includes(hi))return;
+    if(!VISIBLE_HOUSES.includes(hi))return;
     const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM)
                           .sort((a,b)=>a.date.localeCompare(b.date));
     const items=list.length?list.map(s=>renderItem(s)).join(""):`<div class="sempty">予定なし</div>`;
