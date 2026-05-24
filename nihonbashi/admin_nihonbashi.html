@@ -467,7 +467,7 @@ function confirmShiftInDB(id){
 }
 
 // ── UTILS ──
-function fd(s){const d=new Date(s+"T12:00:00");return(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";}
+function fd(s){const d=new Date(s+"T00:00:00");return(d.getMonth()+1)+"/"+d.getDate()+"("+WD[d.getDay()]+")";}
 function ym(s){return s.slice(0,7)}
 function yml(y){const[yr,mo]=y.split("-");return yr+"年"+parseInt(mo)+"月";}
 function sc(i){return getCurSettings().staffColors[i]||PALETTE[i%PALETTE.length]}
@@ -553,7 +553,7 @@ window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selY
 // ── VOTE ──
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
 window.setVote=function(id,s,v){
-  const sh=getCurShifts()[id];if(!sh)return;
+  const sh=shifts[id];if(!sh)return;
   const cur=(sh.votes||{})[s]||"";
   const newV=cur===v?"":v;
   updateVoteInDB(id,s,newV);
@@ -714,7 +714,7 @@ function renderCO(el){
   allCO.forEach(s=>{if(!groups[s.date])groups[s.date]=[];groups[s.date].push(s)});
   let cardsHtml="";
   Object.keys(groups).sort().forEach(date=>{
-    const d=new Date(date+"T12:00:00");
+    const d=new Date(date+"T00:00:00");
     const lbl=date===todayStr?`今日 ${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`:`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`;
     cardsHtml+=`<div style="font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;padding:10px 0 6px;display:flex;align-items:center;gap:8px">${lbl}<span style="flex:1;height:1px;background:#E0E0E0;display:inline-block"></span></div>`;
     groups[date].forEach(s=>{
@@ -768,7 +768,7 @@ function renderRemind(el){
 
   // 今日〜7日以内のシフトを取得（確定済み含む）
   const upcoming=shiftsArr().filter(s=>{
-    const d=new Date(s.date+"T12:00:00");
+    const d=new Date(s.date+"T00:00:00");
     return d>=today && d<=weekLater;
   }).sort((a,b)=>a.date.localeCompare(b.date));
 
@@ -782,7 +782,7 @@ function renderRemind(el){
     const goStaff=staff.filter(st=>v[st]==="go");
     const maybeStaff=staff.filter(st=>v[st]==="maybe");
     const ngStaff=staff.filter(st=>v[st]==="ng");
-    const daysLeft=Math.ceil((new Date(s.date+"T12:00:00")-today)/(1000*60*60*24));
+    const daysLeft=Math.ceil((new Date(s.date+"T00:00:00")-today)/(1000*60*60*24));
     const urgency=daysLeft<=2?"#D42B22":daysLeft<=4?"#D08000":"#00956A";
 
     return`<div style="background:#fff;border-radius:var(--r);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden">
@@ -911,60 +911,15 @@ function renderDetail(s,staff){
   return abB+ciB+loB+eciB+timmyB+editL+`<div class="vgrid">${rows}</div>${bot}`;
 }
 
-// ── iCAL URL をFirebaseに保存・読み込み ──
-function saveIcalUrl(prop,hi,type,url){
-  set(ref(db,`${prop}/icalUrls/${hi}/${type}`),url);
-}
-// 全物件のiCal URLをFirebaseから読み込む
-PROPERTY_KEYS.forEach(prop=>{
-  onValue(ref(db,`${prop}/icalUrls`),snap=>{
-    const data=snap.val()||{};
-    HOUSES.forEach((_,hi)=>{
-      if(data[hi]?.airbnb){
-        icalState[hi].url=data[hi].airbnb;
-        if(!window._icalByProp) window._icalByProp={};
-        if(!window._icalByProp[prop]) window._icalByProp[prop]=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
-        window._icalByProp[prop][hi].url=data[hi].airbnb;
-      }
-      if(data[hi]?.booking){
-        icalStateBooking[hi].url=data[hi].booking;
-        if(!window._icalBookingByProp) window._icalBookingByProp={};
-        if(!window._icalBookingByProp[prop]) window._icalBookingByProp[prop]=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
-        window._icalBookingByProp[prop][hi].url=data[hi].booking;
-      }
-    });
-    render();
-  });
-});
-
 // ── iCAL ──
 window.syncIcal=async function(hi){
-  const urlInput=document.getElementById("iu-"+hi);
-  const url=(urlInput?urlInput.value.trim():icalState[hi].url.trim());
+  const url=icalState[hi].url.trim();
   if(!url){toast("URLを入力してください");return}
-  icalState[hi].url=url;
-  saveIcalUrl(curProp,hi,"airbnb",url);
   icalState[hi].status="loading";render();
-  const proxies=[
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  ];
-  let text="";
-  for(const proxy of proxies){
-    try{
-      const res=await fetch(proxy,{signal:AbortSignal.timeout(10000)});
-      if(!res.ok)continue;
-      const ct=res.headers.get("content-type")||"";
-      if(ct.includes("json")){
-        const data=await res.json();
-        text=data.contents||"";
-      } else {
-        text=await res.text();
-      }
-      if(text.includes("BEGIN:VCALENDAR"))break;
-    }catch{continue}
-  }
   try{
+    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok)throw 0;
+    const text=await res.text();
     const evs=parseIcal(text,"airbnb");
     if(!evs.length)throw 0;
     icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
@@ -977,32 +932,13 @@ window.syncIcal=async function(hi){
   render();
 };
 window.syncBooking=async function(hi){
-  const urlInput=document.getElementById("ib-"+hi);
-  const url=(urlInput?urlInput.value.trim():icalStateBooking[hi].url.trim());
+  const url=icalStateBooking[hi].url.trim();
   if(!url){toast("URLを入力してください");return}
-  icalStateBooking[hi].url=url;
-  saveIcalUrl(curProp,hi,"booking",url);
   icalStateBooking[hi].status="loading";render();
-  const proxies=[
-    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  ];
-  let text="";
-  for(const proxy of proxies){
-    try{
-      const res=await fetch(proxy,{signal:AbortSignal.timeout(10000)});
-      if(!res.ok)continue;
-      const ct=res.headers.get("content-type")||"";
-      if(ct.includes("json")){
-        const data=await res.json();
-        text=data.contents||"";
-      } else {
-        text=await res.text();
-      }
-      if(text.includes("BEGIN:VCALENDAR"))break;
-    }catch{continue}
-  }
   try{
+    const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});
+    if(!res.ok)throw 0;
+    const text=await res.text();
     const evs=parseIcal(text,"booking");
     if(!evs.length)throw 0;
     icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
@@ -1020,32 +956,11 @@ function parseIcal(text,source="airbnb"){
     const sm=b.match(/SUMMARY:(.+)/);
     if(!m)return null;
     const raw=m[1].slice(0,8);
-    const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T12:00:00");
-    
+    const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T00:00:00");
+    d.setDate(d.getDate()-1);
     return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
 }
-// ── iCSファイルをアップロードして読み込む ──
-window.loadIcsFile=function(hi,type,input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const text=e.target.result;
-    const evs=parseIcal(text,type);
-    if(!evs.length){toast("予約データが見つかりませんでした");return}
-    if(type==="airbnb"){
-      icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-      toast(`Airbnb：${evs.length}件読み込みました`);
-    } else {
-      icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};
-      toast(`Booking.com：${evs.length}件読み込みました`);
-    }
-    render();
-  };
-  reader.readAsText(file);
-};
-
 window.makeShifts=function(hi){
   const evs=icalState[hi].events;
   if(!evs.length){toast("先に同期してください");return}
@@ -1074,10 +989,11 @@ function makeShiftsFromEvs(hi,evs){
 function renderIcal(el){
   let html=`
   <div class="howto">
-    <div class="howto-ttl">📖 予約データの読み込み方法</div>
+    <div class="howto-ttl">📖 iCal URLの取得方法</div>
     <ol>
-      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」→ URLをブラウザで開く → ダウンロードされた.icsファイルをアップロード</li>
-      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」→ 同様に.icsファイルをアップロード</li>
+      <li><strong>Airbnb：</strong>管理画面 → カレンダー →「空き状況をエクスポート」</li>
+      <li><strong>Booking.com：</strong>Extranet → カレンダー →「同期」→「エクスポート」</li>
+      <li>URLをコピーして下に貼り付け →「同期」ボタンを押す</li>
     </ol>
   </div>`;
   HOUSES.forEach((h,hi)=>{
@@ -1103,12 +1019,8 @@ function renderIcal(el){
         </div>
         <div class="ical-row">
           <input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
-          <button class="ical-btn" onclick="icalState[${hi}].url=document.getElementById('iu-${hi}').value;syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
+          <button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
         </div>
-        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;background:#FFF5F5;border:1.5px dashed #FF5A5F;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;color:var(--airbnb)">
-          📂 .icsファイルをアップロード
-          <input type="file" accept=".ics" style="display:none" onchange="loadIcsFile(${hi},'airbnb',this)">
-        </label>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">
@@ -1117,12 +1029,8 @@ function renderIcal(el){
         </div>
         <div class="ical-row">
           <input class="ical-inp" id="ib-${hi}" placeholder="Booking.com iCal URLを貼り付け" value="${stB.url}" oninput="icalStateBooking[${hi}].url=this.value" style="border-color:#003580">
-          <button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="icalStateBooking[${hi}].url=document.getElementById('ib-${hi}').value;syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button>
+          <button style="background:#003580;color:#fff;border:none;border-radius:10px;padding:8px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0" onclick="syncBooking(${hi})" ${stB.status==="loading"?"disabled":""}>同期</button>
         </div>
-        <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;background:#EEF4FF;border:1.5px dashed #003580;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:700;color:#003580">
-          📂 .icsファイルをアップロード
-          <input type="file" accept=".ics" style="display:none" onchange="loadIcsFile(${hi},'booking',this)">
-        </label>
       </div>
       ${allEvs.length?`<div class="ical-evs">${evRows}</div>${more}<button class="mk-btn" onclick="makeShiftsAll(${hi})">🗓 チェックアウト日に清掃シフトを自動作成</button>`:""}
     </div>`;
@@ -1332,7 +1240,7 @@ window.openAdd=function(hi){
   document.getElementById("addOverlay").classList.add("open");
 };
 window.openEdit=function(id){
-  const s=getCurShifts()[id];if(!s)return;
+  const s=shifts[id];if(!s)return;
   editingId=id;
   document.getElementById("modalTitle").textContent="清掃予定を編集";
   document.getElementById("fHouse").innerHTML=buildOpts(s.hi);
