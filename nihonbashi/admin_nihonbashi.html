@@ -643,8 +643,7 @@ function renderMonthlyRemind(el){
         txt+="\n";
       });
     }
-    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_${curProp}.html`;
-  }
+    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_${curProp==="ohana"?"ohana":curProp==="yahiro"?"yahiro":"nikko"}.html`;  }
 
   const houseSummary=HOUSES.map((h,hi)=>{
     const list=nextShifts.filter(s=>s.hi===hi);
