@@ -310,7 +310,11 @@ const DEMO_EVS=[
 
 let shifts={}, settings={staff:[],staffColors:[]}, checkoutStatuses={};
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
-let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let icalState=[
+  {url:"https://www.airbnb.com/calendar/ical/1150400360659819048.ics?t=df7b398001b74dc88b23a7aacd5325d2&locale=ja",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.com/calendar/ical/1406253935619780024.ics?t=d92d35f5ceb94464a51742c0111964c9&locale=ja",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.com/calendar/ical/1477206529021628217.ics?t=7198aed4abe742e293de1867ce4bdf63&locale=ja",events:[],status:"none",error:""},
+];
 let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReady=false;
 
@@ -487,6 +491,21 @@ window.syncIcal=async function(hi){
   catch{icalState[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"})):[];icalState[hi].status="ok";icalState[hi].error="demo";toast("デモデータで表示しています")}
   render();
 };
+window.syncIcalFile=async function(hi,input){
+  const file=input.files[0];
+  if(!file)return;
+  icalState[hi].status="loading";render();
+  const text=await file.text();
+  const evs=parseIcal(text,"airbnb");
+  if(evs.length){
+    icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
+    toast(evs.length+"件取得しました");
+  }else{
+    icalState[hi].status="none";
+    toast("予約データが見つかりませんでした");
+  }
+  render();
+};
 window.syncBooking=async function(hi){
   const url=icalStateBooking[hi].url.trim();if(!url){toast("URLを入力してください");return}
   icalStateBooking[hi].status="loading";render();
@@ -494,14 +513,18 @@ window.syncBooking=async function(hi){
   catch{icalStateBooking[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"})):[];icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";toast("デモデータで表示しています")}
   render();
 };
-function parseIcal(text,source="airbnb"){return text.split("BEGIN:VEVENT").slice(1).map(b=>{const m=b.match(/DTEND[^:]*:(\d{8})/),sm=b.match(/SUMMARY:(.+)/);if(!m)return null;const d=new Date(m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8)+"T00:00:00");d.setDate(d.getDate()-1);return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source}}).filter(Boolean)}
+function parseIcal(text,source="airbnb"){return text.split("BEGIN:VEVENT").slice(1).map(b=>{const m=b.match(/DTEND[^:]*:(\d{8})/),sm=b.match(/SUMMARY:(.+)/);if(!m)return null;const d=new Date(m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8)+"T00:00:00");const date=m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8);return{date:date,summary:sm?sm[1].trim():"予約",source}}).filter(Boolean)}
 window.makeShifts=function(hi){makeShiftsFromEvs(hi,icalState[hi].events)};
 window.makeShiftsAll=function(hi){makeShiftsFromEvs(hi,[...icalState[hi].events,...icalStateBooking[hi].events])};
 function makeShiftsFromEvs(hi,evs){
-  if(!evs.length){toast("先に同期してください");return}
-  const staff=settings.staff||[];let added=0;
+  const staff=settings.staff||[];
+  const evDates=new Set(evs.map(ev=>ev.date));
+  let added=0,deleted=0;
+  shiftsArr().filter(s=>s.hi===hi&&!s.confirmed&&!evDates.has(s.date)).forEach(s=>{
+    deleteShiftFromDB(s.id);deleted++;
+  });
   evs.forEach(ev=>{const exists=shiftsArr().find(s=>s.hi===hi&&s.date===ev.date&&!s.confirmed);if(!exists){const id=`shift_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;const v={};staff.forEach(s=>v[s]="");saveShiftToDB(id,{hi,date:ev.date,ts:"11:00",te:"14:00",votes:v,confirmed:false,fromAirbnb:true,guestName:ev.summary,source:ev.source||"airbnb",ci:false,lo:false,eci:false});added++}});
-  toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");setTab("shifts");
+  toast(`${added}件追加、${deleted}件削除しました`);setTab("shifts");
 }
 
 function renderIcal(el){
@@ -524,6 +547,7 @@ function renderIcal(el){
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:var(--airbnb);margin-bottom:5px;display:flex;align-items:center;gap:6px">🏠 Airbnb<div class="stdot ${dcA}"></div><span class="sttxt">${stTxtA}</span></div>
         <div class="ical-row"><input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" oninput="icalState[${hi}].url=this.value"><button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button></div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#FFF0F0;border:2px dashed #FF5A5F;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FF5A5F;font-weight:800">📂 .icsファイルを選んで読み込む<input type="file" accept=".ics" style="display:none" onchange="syncIcalFile(${hi},this)"></label>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">🏨 Booking.com<div class="stdot ${dcB}"></div><span class="sttxt">${stTxtB}</span></div>
