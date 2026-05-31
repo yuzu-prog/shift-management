@@ -311,9 +311,9 @@ const DEMO_EVS=[
 let shifts={}, settings={staff:[],staffColors:[]}, checkoutStatuses={};
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
 let icalState=[
-  {url:"https://www.airbnb.com/calendar/ical/1150400360659819048.ics?t=df7b398001b74dc88b23a7aacd5325d2&locale=ja",events:[],status:"none",error:""},
-  {url:"https://www.airbnb.com/calendar/ical/1406253935619780024.ics?t=d92d35f5ceb94464a51742c0111964c9&locale=ja",events:[],status:"none",error:""},
-  {url:"https://www.airbnb.com/calendar/ical/1477206529021628217.ics?t=7198aed4abe742e293de1867ce4bdf63&locale=ja",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.jp/calendar/ical/1150400360659819048.ics?t=df7b398001b74dc88b23a7aacd5325d2",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.jp/calendar/ical/1406253935619780024.ics?t=d92d35f5ceb94464a51742c0111964c9",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.jp/calendar/ical/1477206529021628217.ics?t=7198aed4abe742e293de1867ce4bdf63",events:[],status:"none",error:""},
 ];
 let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReady=false;
@@ -487,7 +487,7 @@ function renderDetail(s,staff){
 window.syncIcal=async function(hi){
   const url=icalState[hi].url.trim();if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
-  try{const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const data=await res.json();const evs=parseIcal(data.contents||"","airbnb");if(!evs.length)throw 0;icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};toast(`Airbnb：${evs.length}件取得しました`)}
+  try{const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const text=await res.text();const evs=parseIcal(text,"airbnb");if(!evs.length)throw 0;icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};toast(`Airbnb：${evs.length}件取得しました`)}
   catch{icalState[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"airbnb"})):[];icalState[hi].status="ok";icalState[hi].error="demo";toast("デモデータで表示しています")}
   render();
 };
@@ -509,11 +509,20 @@ window.syncIcalFile=async function(hi,input){
 window.syncBooking=async function(hi){
   const url=icalStateBooking[hi].url.trim();if(!url){toast("URLを入力してください");return}
   icalStateBooking[hi].status="loading";render();
-  try{const res=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const data=await res.json();const evs=parseIcal(data.contents||"","booking");if(!evs.length)throw 0;icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};toast(`Booking.com：${evs.length}件取得しました`)}
+  try{const res=await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(8000)});if(!res.ok)throw 0;const text=await res.text();const evs=parseIcal(text,"booking");if(!evs.length)throw 0;icalStateBooking[hi]={...icalStateBooking[hi],events:evs,status:"ok",error:""};toast(`Booking.com：${evs.length}件取得しました`)}
   catch{icalStateBooking[hi].events=DEMO_EVS[hi]?DEMO_EVS[hi].map(e=>({date:e.date,summary:`CO: ${e.guest}`,source:"booking"})):[];icalStateBooking[hi].status="ok";icalStateBooking[hi].error="demo";toast("デモデータで表示しています")}
   render();
 };
-function parseIcal(text,source="airbnb"){return text.split("BEGIN:VEVENT").slice(1).map(b=>{const m=b.match(/DTEND[^:]*:(\d{8})/),sm=b.match(/SUMMARY:(.+)/);if(!m)return null;const d=new Date(m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8)+"T00:00:00");const date=m[1].slice(0,4)+"-"+m[1].slice(4,6)+"-"+m[1].slice(6,8);return{date:date,summary:sm?sm[1].trim():"予約",source}}).filter(Boolean)}
+function parseIcal(text,source="airbnb"){
+  return text.split("BEGIN:VEVENT").slice(1).map(b=>{
+    const m=b.match(/DTEND[^:\r\n]*:(\d{8})/)||b.match(/DTEND[^:\r\n]*:(\d{8})T/);
+    const sm=b.match(/SUMMARY:(.+)/);
+    if(!m)return null;
+    const raw=m[1].slice(0,8);
+    const date=raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8);
+    return{date:date,summary:sm?sm[1].trim():"予約",source};
+  }).filter(Boolean)
+}
 window.makeShifts=function(hi){makeShiftsFromEvs(hi,icalState[hi].events)};
 window.makeShiftsAll=function(hi){makeShiftsFromEvs(hi,[...icalState[hi].events,...icalStateBooking[hi].events])};
 function makeShiftsFromEvs(hi,evs){
