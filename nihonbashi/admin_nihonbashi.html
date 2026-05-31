@@ -643,7 +643,7 @@ function renderMonthlyRemind(el){
         txt+="\n";
       });
     }
-    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff_${curProp}.html`;
+    txt+=`\nシフトアプリ: https://yuzu-prog.github.io/shift-management/nihonbashi/staff.html`;
     return txt.trim();
   }
 
@@ -913,6 +913,8 @@ function renderDetail(s,staff){
 
 // ── iCAL ──
 window.syncIcal=async function(hi){
+  const inputEl=document.getElementById('iu-'+hi);
+  if(inputEl) icalState[hi].url=inputEl.value;
   const url=icalState[hi].url.trim();
   if(!url){toast("URLを入力してください");return}
   icalState[hi].status="loading";render();
