@@ -972,7 +972,6 @@ function parseIcal(text,source="airbnb"){
     if(!m)return null;
     const raw=m[1].slice(0,8);
     const d=new Date(raw.slice(0,4)+"-"+raw.slice(4,6)+"-"+raw.slice(6,8)+"T00:00:00");
-    d.setDate(d.getDate()-1);
     return{date:d.toISOString().slice(0,10),summary:sm?sm[1].trim():"予約",source};
   }).filter(Boolean);
 }
