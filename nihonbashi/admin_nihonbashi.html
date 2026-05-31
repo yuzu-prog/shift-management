@@ -404,7 +404,11 @@ function getCurSettings(){ return allSettings[curProp]||{staff:[],staffColors:[]
 
 let tab="shifts", selYM="", expanded=new Set(), editingId=null;
 let checkoutStatuses={};
-let icalState=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
+let icalState=[
+  {url:"https://www.airbnb.jp/calendar/ical/1573706910935710002.ics?t=180f2e0d3cb5401e95085715f0071006",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.jp/calendar/ical/1569400351992603857.ics?t=312664c3e3454bc194ac9bd40d20da64",events:[],status:"none",error:""},
+  {url:"https://www.airbnb.jp/calendar/ical/1485933977584978407.ics?t=f676d6098c6548aea2a617c2e7c07358",events:[],status:"none",error:""},
+];
 let icalStateBooking=HOUSES.map(()=>({url:"",events:[],status:"none",error:""}));
 let dbReadyCnt=0;
 
