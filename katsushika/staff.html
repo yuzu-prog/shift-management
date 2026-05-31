@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>清掃シフト確認 | 葛飾</title>
+<title>清掃シフト確認</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;--go:#00956A;--go-bg:#E0F5EE;--ng:#D42B22;--ng-bg:#FDECEA;--maybe:#D08000;--maybe-bg:#FEF3C7;--airbnb:#FF5A5F;--ci:#4338CA;--ci-bg:#EEF2FF;--lo:#B45309;--lo-bg:#FEF3C7;--eci:#0369A1;--eci-bg:#E0F2FE;--r:16px;--sh:0 2px 14px rgba(0,0,0,.07)}
@@ -103,7 +103,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <body>
 <div class="hdr" id="hdr" style="display:none">
   <div class="hdr-top">
-    <h1><span class="ab-dot"></span>葛飾 清掃シフト</h1>
+    <h1><span class="ab-dot"></span>清掃シフト</h1>
     <span class="staff-label" id="staffLabel">清掃員</span>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between">
@@ -137,264 +137,42 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
 const firebaseConfig={apiKey:"AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",authDomain:"shiftmanagement-b01bd.firebaseapp.com",projectId:"shiftmanagement-b01bd",storageBucket:"shiftmanagement-b01bd.firebasestorage.app",messagingSenderId:"405322282736",appId:"1:405322282736:web:a31507bfa42ad6e52cb435",databaseURL:"https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"};
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
-
-const HOUSES=[
-  {name:"SHOGUN",icon:"🏯",color:"#1A237E"},
-  {name:"YUZUKI",icon:"🌙",color:"#C62828"},
-  {name:"HIKARI",icon:"✨",color:"#0288D1"},
-  {name:"CHOCO", icon:"🍫",color:"#37474F"},
-];
-const PROP_KEYS=["shogun","yuzuki","hikari","choco"];
+const app=initializeApp(firebaseConfig);const db=getDatabase(app);
+const HOUSES=[{name:"NEO",icon:"🏠",color:"#FF4081"},{name:"ZEN",icon:"🍃",color:"#607D8B"},{name:"MIYABI",icon:"🌸",color:"#1A237E"}];
 const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
 const WD=["日","月","火","水","木","金","土"];
-const SESSION_KEY="katsushika_staff_me";
-
-// 各物件のシフト・設定を管理
-let allShifts={shogun:{},yuzuki:{},hikari:{},choco:{}};
-let allSettings={shogun:{staff:[],staffColors:[]},yuzuki:{staff:[],staffColors:[]},hikari:{staff:[],staffColors:[]},choco:{staff:[],staffColors:[]}};
+let shifts={},settings={staff:[],staffColors:[]};
 let me="",tab="shifts",selYM="",expanded=new Set(),dbReady=false;
-let loadedCount=0;
-const TOTAL_PROPS=PROP_KEYS.length*2; // shifts + settings per prop
-
-function checkReady(){
-  loadedCount++;
-  if(loadedCount>=TOTAL_PROPS&&!dbReady){
-    dbReady=true;
-    const now=new Date();
-    selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-    // 全物件のスタッフをまとめる
-    const allStaff=getMergedStaff();
-    if(allStaff.length===0){
-      document.getElementById("main").innerHTML=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">⚙️</div><div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div></div>`;
-      return;
-    }
-    const saved=sessionStorage.getItem(SESSION_KEY);
-    if(saved&&allStaff.includes(saved)){me=saved;showApp()}
-    else{showNameSelect()}
-  } else if(dbReady&&me){
-    render();
-  }
-}
-
-PROP_KEYS.forEach(prop=>{
-  onValue(ref(db,`katsushika/${prop}/shifts`),snap=>{
-    allShifts[prop]=snap.val()||{};
-    checkReady();
-  });
-  onValue(ref(db,`katsushika/${prop}/settings`),snap=>{
-    if(snap.val()) allSettings[prop]=snap.val();
-    if(!allSettings[prop].staffColors) allSettings[prop].staffColors=[];
-    if(!allSettings[prop].staff) allSettings[prop].staff=[];
-    checkReady();
-  });
-});
-
-// 全物件のスタッフをまとめて重複排除
-function getMergedStaff(){
-  const set=new Set();
-  PROP_KEYS.forEach(prop=>{
-    (allSettings[prop].staff||[]).forEach(s=>set.add(s));
-  });
-  return[...set];
-}
-
-// 特定スタッフのカラーを取得（最初に見つかった物件から）
-function getStaffColor(name){
-  for(const prop of PROP_KEYS){
-    const idx=(allSettings[prop].staff||[]).indexOf(name);
-    if(idx>=0){
-      return(allSettings[prop].staffColors||[])[idx]||PALETTE[idx%PALETTE.length];
-    }
-  }
-  return PALETTE[0];
-}
-
+onValue(ref(db,"katsushika/shifts"),snap=>{shifts=snap.val()||{};if(dbReady)render()});
+onValue(ref(db,"settings"),snap=>{if(snap.val())settings=snap.val();if(!settings.staffColors)settings.staffColors=[];if(!settings.staff)settings.staff=[];if(!dbReady){dbReady=true;const now=new Date();selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;if(settings.staff.length===0){document.getElementById("main").innerHTML=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">⚙️</div><div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div></div>`;return}const saved=localStorage.getItem("shiftMe");if(saved&&settings.staff.includes(saved)){me=saved;showApp()}else{showNameSelect()}}else{if(me)render()}});
+function sc(i){return settings.staffColors[i]||PALETTE[i%PALETTE.length]}
 function fd(s){const d=new Date(s+"T00:00:00");return`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`}
 function ym(s){return s.slice(0,7)}
 function yml(y){const[yr,mo]=y.split("-");return`${yr}年${parseInt(mo)}月`}
+function counts(v){let g=0,m2=0,n=0,b=0;settings.staff.forEach(s=>{const x=(v||{})[s]||"";x==="go"?g++:x==="maybe"?m2++:x==="ng"?n++:b++});return{g,m:m2,n,b}}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
-
-// 特定物件のシフト配列を返す
-function shiftsArrForProp(prop){
-  return Object.entries(allShifts[prop]||{}).map(([id,s])=>({...s,id,prop}));
-}
-
-// 全物件のシフト配列
-function allShiftsArr(){
-  return PROP_KEYS.flatMap(prop=>shiftsArrForProp(prop));
-}
-
-function setSyncStatus(ok){
-  const dot=document.getElementById("syncDot"),txt=document.getElementById("syncTxt");
-  if(!dot)return;
-  if(ok){dot.classList.remove("syncing");txt.textContent="同期済み"}
-  else{dot.classList.add("syncing");txt.textContent="保存中..."}
-}
-
-function showNameSelect(){
-  const allStaff=getMergedStaff();
-  document.getElementById("main").innerHTML=`<div class="name-select-screen"><div class="name-select-title">👋 あなたの名前を選んでください</div><div class="name-select-sub">一度選ぶと次回から自動で表示されます</div><div class="name-grid">${allStaff.map(s=>`<button class="name-btn" style="background:${getStaffColor(s)}" onclick="selectName('${s}')">${s}</button>`).join("")}</div></div>`;
-}
-
-window.selectName=function(name){me=name;sessionStorage.setItem(SESSION_KEY,name);showApp()};
-
-function showApp(){
-  document.getElementById("hdr").style.display="block";
-  document.getElementById("tabBar").style.display="flex";
-  document.getElementById("bnav").style.display="flex";
-  document.getElementById("staffLabel").textContent=me;
-  renderChips();
-  render();
-}
-
-function renderChips(){
-  const el=document.getElementById("chips");
-  const allStaff=getMergedStaff();
-  el.innerHTML=allStaff.map(s=>{
-    const c=getStaffColor(s),on=s===me;
-    return`<button class="chip" style="${on?`background:${c};border-color:${c}`:""}" onclick="changeName('${s}')">${s}</button>`;
-  }).join("");
-}
-
-window.changeName=function(name){me=name;sessionStorage.setItem(SESSION_KEY,name);document.getElementById("staffLabel").textContent=name;renderChips();render()};
-
-window.setTab=function(t){
-  tab=t;
-  ["shifts","mine","done"].forEach(x=>{
-    const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);
-    if(te)te.classList.toggle("on",x===t);
-    if(ne)ne.classList.toggle("on",x===t);
-  });
-  render();
-};
-
-function getMonths(conf){
-  const s2=new Set();
-  allShiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));
-  return[...s2].sort();
-}
-
-function renderMbar(conf){
-  const bar=document.getElementById("mbar");
-  bar.classList.remove("hidden");
-  const ms=getMonths(conf);
-  if(ms.length&&!ms.includes(selYM))selYM=ms[0];
-  document.getElementById("mstrip").innerHTML=ms.map(m=>`<button class="mmbtn ${m===selYM?"on":""}" onclick="selMonth('${m}')">${yml(m)}</button>`).join("");
-  const cnt=allShiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;
-  document.getElementById("mcnt").textContent=`${cnt}件`;
-  setTimeout(()=>{const a=document.querySelector(".mmbtn.on");if(a)a.scrollIntoView({inline:"center",block:"nearest"})},50);
-}
-
+function shiftsArr(){return Object.entries(shifts).map(([id,s])=>({...s,id}))}
+function setSyncStatus(ok){const dot=document.getElementById("syncDot"),txt=document.getElementById("syncTxt");if(!dot)return;if(ok){dot.classList.remove("syncing");txt.textContent="同期済み"}else{dot.classList.add("syncing");txt.textContent="保存中..."}}
+function showNameSelect(){document.getElementById("main").innerHTML=`<div class="name-select-screen"><div class="name-select-title">👋 あなたの名前を選んでください</div><div class="name-select-sub">一度選ぶと次回から自動で表示されます</div><div class="name-grid">${settings.staff.map((s,i)=>`<button class="name-btn" style="background:${sc(i)}" onclick="selectName('${s}')">${s}</button>`).join("")}</div></div>`}
+window.selectName=function(name){me=name;localStorage.setItem("shiftMe",name);showApp()};
+function showApp(){document.getElementById("hdr").style.display="block";document.getElementById("tabBar").style.display="flex";document.getElementById("bnav").style.display="flex";document.getElementById("staffLabel").textContent=me;renderChips();render()}
+function renderChips(){const el=document.getElementById("chips");el.innerHTML=settings.staff.map((s,i)=>{const c=sc(i),on=s===me;return`<button class="chip" style="${on?`background:${c};border-color:${c}`:""}" onclick="changeName('${s}')">${s}</button>`}).join("")}
+window.changeName=function(name){me=name;localStorage.setItem("shiftMe",name);document.getElementById("staffLabel").textContent=name;renderChips();render()};
+window.setTab=function(t){tab=t;["shifts","mine","done"].forEach(x=>{const te=document.getElementById("tab-"+x),ne=document.getElementById("nb-"+x);if(te)te.classList.toggle("on",x===t);if(ne)ne.classList.toggle("on",x===t)});render()};
+function getMonths(conf){const s2=new Set();shiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));return[...s2].sort()}
+function renderMbar(conf){const bar=document.getElementById("mbar");bar.classList.remove("hidden");const ms=getMonths(conf);if(ms.length&&!ms.includes(selYM))selYM=ms[0];document.getElementById("mstrip").innerHTML=ms.map(m=>`<button class="mmbtn ${m===selYM?"on":""}" onclick="selMonth('${m}')">${yml(m)}</button>`).join("");const cnt=shiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;document.getElementById("mcnt").textContent=`${cnt}件`;setTimeout(()=>{const a=document.querySelector(".mmbtn.on");if(a)a.scrollIntoView({inline:"center",block:"nearest"})},50)}
 window.selMonth=function(m){selYM=m;renderMbar(tab==="done");render()};
 window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selYM),n=i+d;if(n>=0&&n<ms.length)window.selMonth(ms[n])};
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
-
-window.castVote=function(id,prop,v){
-  const cur=((allShifts[prop][id]||{}).votes||{})[me]||"";
-  const newV=cur===v?"":v;
-  setSyncStatus(false);
-  update(ref(db,`katsushika/${prop}/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
-};
-
+window.castVote=function(id,v){const cur=((shifts[id]||{}).votes||{})[me]||"";const newV=cur===v?"":v;setSyncStatus(false);update(ref(db,`katsushika/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")})};
 window.openPhoto=function(url){document.getElementById("photoModalImg").src=url;document.getElementById("photoModal").style.display="flex"};
 window.closePhoto=function(){document.getElementById("photoModal").style.display="none"};
-
-function getPropInfoHTML(prop,hi){
-  const propInfo=((allSettings[prop]||{}).propInfo||{})[hi]||{};
-  const items=[];
-  if(propInfo.lock)items.push(`<div class="prop-item"><span class="prop-lbl">🔐 スマートロック</span><span class="prop-val">${propInfo.lock}</span></div>`);
-  if(propInfo.keybox)items.push(`<div class="prop-item"><span class="prop-lbl">🗝 キーボックス</span><span class="prop-val">${propInfo.keybox}</span></div>`);
-  if(propInfo.address)items.push(`<div class="prop-item"><span class="prop-lbl">📍 住所</span><span class="prop-val">${propInfo.address}</span></div>`);
-  if(propInfo.note)items.push(`<div class="prop-item"><span class="prop-lbl">📝 備考</span><span class="prop-val">${propInfo.note}</span></div>`);
-  const photos=(propInfo.photos||[]).filter(p=>p.url);
-  if(photos.length>0){
-    const photoHTML=photos.map(p=>`<div style="margin-bottom:10px">${p.caption?`<div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px">📸 ${p.caption}</div>`:""}<img src="${p.url}" alt="" style="width:100%;border-radius:10px;object-fit:cover;max-height:220px;cursor:pointer" onclick="openPhoto('${p.url}')" onerror="this.style.display='none'"></div>`).join("");
-    items.push(`<div class="prop-item" style="flex-direction:column;align-items:flex-start"><span class="prop-lbl" style="margin-bottom:8px">📸 備品写真</span><div style="width:100%">${photoHTML}</div></div>`);
-  }
-  if(!items.length)return"";
-  return`<div class="prop-info-card">${items.join("")}</div>`;
-}
-
-function counts(votes,staff){
-  let g=0,m2=0,n=0,b=0;
-  staff.forEach(s=>{const x=(votes||{})[s]||"";x==="go"?g++:x==="maybe"?m2++:x==="ng"?n++:b++});
-  return{g,m:m2,n,b};
-}
-
-function render(){
-  const el=document.getElementById("main");
-  if(!me)return;
-  const conf=tab==="done";
-
-  if(tab==="mine"){
-    renderMbar(false);
-    let html="";
-    PROP_KEYS.forEach((prop,hi)=>{
-      const h=HOUSES[hi];
-      const list=shiftsArrForProp(prop).filter(s=>{
-        const v=s.votes||{};
-        return !s.confirmed&&ym(s.date)===selYM&&(v[me]||"")==="go";
-      }).sort((a,b)=>a.date.localeCompare(b.date));
-      if(!list.length)return;
-      html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(prop,hi)}<div class="slist">${list.map(s=>renderMyItem(s,prop)).join("")}</div></div>`;
-    });
-    if(!html)html=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700">行けると回答したシフトはありません</div></div>`;
-    el.innerHTML=html;
-    setSyncStatus(true);
-    return;
-  }
-
-  renderMbar(conf);
-  let html="";
-  PROP_KEYS.forEach((prop,hi)=>{
-    const h=HOUSES[hi];
-    const staff=allSettings[prop].staff||[];
-    const list=shiftsArrForProp(prop).filter(s=>conf?s.confirmed:!s.confirmed).filter(s=>ym(s.date)===selYM).sort((a,b)=>a.date.localeCompare(b.date));
-    const items=list.length?list.map(s=>renderItem(s,prop,staff)).join(""):`<div class="sempty">予定なし</div>`;
-    html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(prop,hi)}<div class="slist">${items}</div></div>`;
-  });
-  el.innerHTML=html;
-  setSyncStatus(true);
-}
-
-function renderMyItem(s,prop){
-  const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;
-  const cfmTag=s.confirmed?`<span class="pill go">✅確定</span>`:`<span class="pill go">⭕行ける</span>`;
-  return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills">${cfmTag}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div></div><span class="chev ${expanded.has(s.id)?"open":""}">▶</span></div><div class="sdetail ${expanded.has(s.id)?"open":""}">${expanded.has(s.id)?renderDetail(s,prop):""}</div></div>`;
-}
-
-function renderItem(s,prop,staff){
-  const v=s.votes||{},c=counts(v,staff),isOpen=expanded.has(s.id);
-  const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;
-  const myV=v[me]||"";
-  const myPill=myV==="go"?`<span class="pill go">⭕自分</span>`:myV==="maybe"?`<span class="pill maybe">△自分</span>`:myV==="ng"?`<span class="pill ng">✕自分</span>`:"";
-  const goNames=staff.filter(st=>(v[st]||"")==="go");
-  const goNamesStr=goNames.length>0?`<div class="go-names">✅ ${goNames.join("・")}</div>`:"";
-  return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')">${s.fromAirbnb?`<span class="ab-src"></span>`:`<span class="mn-src"></span>`}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills"><span class="pill go">⭕${c.g}</span><span class="pill maybe">△${c.m}</span><span class="pill ng">✕${c.n}</span>${myPill}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div>${goNamesStr}</div><span class="chev ${isOpen?"open":""}">▶</span></div><div class="sdetail ${isOpen?"open":""}">${isOpen?renderDetail(s,prop):""}</div></div>`;
-}
-
-function renderDetail(s,prop){
-  const v=s.votes||{};
-  const mc=getStaffColor(me);
-  const cur=v[me]||"";
-  const staff=allSettings[prop].staff||[];
-  const abB=s.fromAirbnb?`<div class="ab-badge">✈️ Airbnbより自動作成${s.guestName?` — ${s.guestName}`:""}</div>`:"";
-  const ciB=s.ci?`<div class="ci-badge">🏠 当日チェックインあり</div>`:"";
-  const loB=s.lo?`<div class="lo-badge">✈️ レイトアウトあり</div>`:"";
-  const eciB=s.eci?`<div class="eci-badge">👜 アーリーチェックインあり</div>`:"";
-  const myRow=`<div class="vrow" style="margin-bottom:12px"><span class="nmpill" style="background:${mc}">${me}</span><div class="mybtns"><button class="mbtn go ${cur==="go"?"on":""}" onclick="castVote('${s.id}','${prop}','go')">⭕<br>行ける</button><button class="mbtn maybe ${cur==="maybe"?"on":""}" onclick="castVote('${s.id}','${prop}','maybe')">△<br>未定</button><button class="mbtn ng ${cur==="ng"?"on":""}" onclick="castVote('${s.id}','${prop}','ng')">✕<br>無理</button></div></div>`;
-  const others=staff.filter(st=>st!==me).map(st=>{
-    const vv=v[st]||"";
-    const icon=vv==="go"?"⭕":vv==="maybe"?"△":vv==="ng"?"✕":"—";
-    return`<div class="vrow"><span class="nmpill" style="background:${getStaffColor(st)}">${st}</span><span class="vr-icon">${icon}</span><span class="vr-st">${vv==="go"?"行ける":vv==="maybe"?"未定":vv==="ng"?"無理":"未回答"}</span></div>`;
-  }).join("");
-  const cfm=s.confirmed?`<div class="cfm-tag">✅ このシフトは確定済みです</div>`:"";
-  return abB+ciB+loB+eciB+`<div class="vgrid">${myRow}${others}</div>${cfm}`;
-}
+function getPropInfoHTML(hi){const propInfo=(settings.propInfo||{})[hi]||{};const items=[];if(propInfo.lock)items.push(`<div class="prop-item"><span class="prop-lbl">🔐 スマートロック</span><span class="prop-val">${propInfo.lock}</span></div>`);if(propInfo.keybox)items.push(`<div class="prop-item"><span class="prop-lbl">🗝 キーボックス</span><span class="prop-val">${propInfo.keybox}</span></div>`);if(propInfo.address)items.push(`<div class="prop-item"><span class="prop-lbl">📍 住所</span><span class="prop-val">${propInfo.address}</span></div>`);if(propInfo.note)items.push(`<div class="prop-item"><span class="prop-lbl">📝 備考</span><span class="prop-val">${propInfo.note}</span></div>`);const photos=(propInfo.photos||[]).filter(p=>p.url);if(photos.length>0){const photoHTML=photos.map(p=>`<div style="margin-bottom:10px">${p.caption?`<div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px">📸 ${p.caption}</div>`:""}<img src="${p.url}" alt="" style="width:100%;border-radius:10px;object-fit:cover;max-height:220px;cursor:pointer" onclick="openPhoto('${p.url}')" onerror="this.style.display='none'"></div>`).join("");items.push(`<div class="prop-item" style="flex-direction:column;align-items:flex-start"><span class="prop-lbl" style="margin-bottom:8px">📸 備品写真</span><div style="width:100%">${photoHTML}</div></div>`)}if(!items.length)return"";return`<div class="prop-info-card">${items.join("")}</div>`}
+function render(){const el=document.getElementById("main");if(!me)return;const conf=tab==="done";if(tab==="mine"){renderMbar(false);const assigns=settings.assigns||{};const myHouses=assigns[me]!==undefined?assigns[me]:[0,1,2];const myShifts=shiftsArr().filter(s=>{const v=s.votes||{};return!s.confirmed&&myHouses.includes(s.hi)&&ym(s.date)===selYM&&(v[me]||"")==="go"}).sort((a,b)=>a.date.localeCompare(b.date));if(!myShifts.length){el.innerHTML=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700">行けると回答したシフトはありません</div></div>`;setSyncStatus(true);return}let html="";HOUSES.forEach((h,hi)=>{if(!myHouses.includes(hi))return;const list=myShifts.filter(s=>s.hi===hi);if(!list.length)return;html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(hi)}<div class="slist">${list.map(s=>renderMyItem(s)).join("")}</div></div>`});el.innerHTML=html;setSyncStatus(true);return}renderMbar(conf);const assigns=settings.assigns||{};const myHouses=assigns[me]!==undefined?assigns[me]:[0,1,2];let html="";HOUSES.forEach((h,hi)=>{if(!myHouses.includes(hi))return;const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).sort((a,b)=>a.date.localeCompare(b.date));const items=list.length?list.map(s=>renderItem(s)).join(""):`<div class="sempty">予定なし</div>`;html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(hi)}<div class="slist">${items}</div></div>`});if(!html)html=`<div style="text-align:center;padding:40px;color:var(--sub);font-size:13px">担当棟がまだ設定されていません</div>`;el.innerHTML=html;setSyncStatus(true)}
+function renderMyItem(s){const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;const cfmTag=s.confirmed?`<span class="pill go">✅確定</span>`:`<span class="pill go">⭕行ける</span>`;return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills">${cfmTag}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div></div><span class="chev ${expanded.has(s.id)?"open":""}">▶</span></div><div class="sdetail ${expanded.has(s.id)?"open":""}">${expanded.has(s.id)?renderDetail(s):""}</div></div>`}
+function renderItem(s){const v=s.votes||{},c=counts(v),isOpen=expanded.has(s.id);const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;const myV=v[me]||"";const myPill=myV==="go"?`<span class="pill go">⭕自分</span>`:myV==="maybe"?`<span class="pill maybe">△自分</span>`:myV==="ng"?`<span class="pill ng">✕自分</span>`:"";const goNames=settings.staff.filter(st=>(v[st]||"")==="go");const goNamesStr=goNames.length>0?`<div class="go-names">✅ ${goNames.join("・")}</div>`:"";return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')">${s.fromAirbnb?`<span class="ab-src"></span>`:`<span class="mn-src"></span>`}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills"><span class="pill go">⭕${c.g}</span><span class="pill maybe">△${c.m}</span><span class="pill ng">✕${c.n}</span>${myPill}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div>${goNamesStr}</div><span class="chev ${isOpen?"open":""}">▶</span></div><div class="sdetail ${isOpen?"open":""}">${isOpen?renderDetail(s):""}</div></div>`}
+function renderDetail(s){const v=s.votes||{};const mi=settings.staff.indexOf(me),mc=sc(mi),cur=v[me]||"";const abB=s.fromAirbnb?`<div class="ab-badge">✈️ Airbnbより自動作成${s.guestName?` — ${s.guestName}`:""}</div>`:"";const ciB=s.ci?`<div class="ci-badge">🏠 当日チェックインあり</div>`:"";const loB=s.lo?`<div class="lo-badge">✈️ レイトアウトあり</div>`:"";const eciB=s.eci?`<div class="eci-badge">👜 アーリーチェックインあり</div>`:"";const myRow=`<div class="vrow" style="margin-bottom:12px"><span class="nmpill" style="background:${mc}">${me}</span><div class="mybtns"><button class="mbtn go ${cur==="go"?"on":""}" onclick="castVote('${s.id}','go')">⭕<br>行ける</button><button class="mbtn maybe ${cur==="maybe"?"on":""}" onclick="castVote('${s.id}','maybe')">△<br>未定</button><button class="mbtn ng ${cur==="ng"?"on":""}" onclick="castVote('${s.id}','ng')">✕<br>無理</button></div></div>`;const others=settings.staff.filter(st=>st!==me).map(st=>{const si=settings.staff.indexOf(st),vv=v[st]||"";const icon=vv==="go"?"⭕":vv==="maybe"?"△":vv==="ng"?"✕":"—";return`<div class="vrow"><span class="nmpill" style="background:${sc(si)}">${st}</span><span class="vr-icon">${icon}</span><span class="vr-st">${vv==="go"?"行ける":vv==="maybe"?"未定":vv==="ng"?"無理":"未回答"}</span></div>`}).join("");const cfm=s.confirmed?`<div class="cfm-tag">✅ このシフトは確定済みです</div>`:"";return abB+ciB+loB+eciB+`<div class="vgrid">${myRow}${others}</div>${cfm}`}
 </script>
 </body>
 </html>
