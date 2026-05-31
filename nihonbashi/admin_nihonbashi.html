@@ -931,21 +931,6 @@ window.syncIcal=async function(hi){
   }
   render();
 };
-window.syncIcalFile=async function(hi,input){
-  const file=input.files[0];
-  if(!file)return;
-  icalState[hi].status="loading";render();
-  const text=await file.text();
-  const evs=parseIcal(text,"airbnb");
-  if(evs.length){
-    icalState[hi]={...icalState[hi],events:evs,status:"ok",error:""};
-    toast(evs.length+"件取得しました");
-  } else {
-    icalState[hi].status="none";
-    toast("予約データが見つかりませんでした");
-  }
-  render();
-};
 window.syncBooking=async function(hi){
   const url=icalStateBooking[hi].url.trim();
   if(!url){toast("URLを入力してください");return}
@@ -988,7 +973,14 @@ window.makeShiftsAll=function(hi){
 };
 function makeShiftsFromEvs(hi,evs){
   const staff=getCurSettings().staff||[];
-  let added=0;
+  const evDates=new Set(evs.map(ev=>ev.date));
+  let added=0,deleted=0;
+  // icsにない未確定シフトを削除
+  shiftsArr().filter(s=>s.hi===hi&&!s.confirmed&&s.fromAirbnb&&!evDates.has(s.date)).forEach(s=>{
+    deleteShiftFromDB(s.id);
+    deleted++;
+  });
+  // 新しいシフトを追加
   evs.forEach(ev=>{
     const exists=shiftsArr().find(s=>s.hi===hi&&s.date===ev.date&&!s.confirmed);
     if(!exists){
@@ -998,7 +990,7 @@ function makeShiftsFromEvs(hi,evs){
       added++;
     }
   });
-  toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");
+  toast(`${added}件追加、${deleted}件削除しました`);
   setTab("shifts");
 }
 function renderIcal(el){
@@ -1036,7 +1028,6 @@ function renderIcal(el){
           <input class="ical-inp" id="iu-${hi}" placeholder="Airbnb iCal URLを貼り付け" value="${stA.url}" onchange="icalState[${hi}].url=this.value" oninput="icalState[${hi}].url=this.value" onpaste="setTimeout(()=>{icalState[${hi}].url=document.getElementById('iu-${hi}').value},100)">
           <button class="ical-btn" onclick="syncIcal(${hi})" ${stA.status==="loading"?"disabled":""}>同期</button>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;background:#FFF0F0;border:2px dashed #FF5A5F;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FF5A5F;font-weight:800">📂 .icsファイルを選んで読み込む<input type="file" accept=".ics" style="display:none" onchange="syncIcalFile(${hi},this)"></label>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:11px;font-weight:700;color:#003580;margin-bottom:5px;display:flex;align-items:center;gap:6px">
