@@ -988,7 +988,12 @@ window.makeShiftsAll=function(hi){
 };
 function makeShiftsFromEvs(hi,evs){
   const staff=getCurSettings().staff||[];
-  let added=0;
+  const evDates=new Set(evs.map(ev=>ev.date));
+  let added=0,deleted=0;
+  shiftsArr().filter(s=>s.hi===hi&&!s.confirmed&&!evDates.has(s.date)).forEach(s=>{
+    deleteShiftFromDB(s.id);
+    deleted++;
+  });
   evs.forEach(ev=>{
     const exists=shiftsArr().find(s=>s.hi===hi&&s.date===ev.date&&!s.confirmed);
     if(!exists){
@@ -998,7 +1003,7 @@ function makeShiftsFromEvs(hi,evs){
       added++;
     }
   });
-  toast(added?`${added}件のシフトを自動作成しました`:"すでに全件登録済みです");
+  toast(`${added}件追加、${deleted}件削除しました`);
   setTab("shifts");
 }
 function renderIcal(el){
