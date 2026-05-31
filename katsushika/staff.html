@@ -240,8 +240,11 @@ PROPS.forEach(prop=>{
   onValue(ref(db,"katsushika/settings"), snap=>{
     const sData=snap.val()||{staff:[],staffColors:[]};
     PROPS.forEach(p=>{ allSettingsData[p]=sData; });
+    settings.staff=sData.staff||[];
+    settings.staffColors=sData.staffColors||[];
+    settings.assigns=sData.assigns||{};
+    settings.propInfo=sData.propInfo||{};
     settingsLoadedCount++;
-    mergeSettings();
     if(!dbReady){
       dbReady=true;
       const now=new Date();
