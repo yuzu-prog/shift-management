@@ -181,11 +181,20 @@ function checkReady(){
 }
 
 PROP_KEYS.forEach(prop=>{
-  onValue(ref(db,`katsushika/${prop}/shifts`),snap=>{
-    allShifts[prop]=snap.val()||{};
+  onValue(ref(db,"katsushika/shifts"),snap=>{
+    const data=snap.val()||{};
+    // hi番号でpropに振り分け
+    PROP_KEYS.forEach((p,idx)=>{
+      allShifts[p]={};
+    });
+    Object.entries(data).forEach(([id,s])=>{
+      if(!s||s.hi===undefined)return;
+      const p=PROP_KEYS[s.hi];
+      if(p) allShifts[p][id]=s;
+    });
     checkReady();
   });
-  onValue(ref(db,`katsushika/${prop}/settings`),snap=>{
+  onValue(ref(db,"katsushika/settings"),snap=>{
     if(snap.val()) allSettings[prop]=snap.val();
     if(!allSettings[prop].staffColors) allSettings[prop].staffColors=[];
     if(!allSettings[prop].staff) allSettings[prop].staff=[];
@@ -297,7 +306,7 @@ window.castVote=function(id,prop,v){
   const cur=((allShifts[prop][id]||{}).votes||{})[me]||"";
   const newV=cur===v?"":v;
   setSyncStatus(false);
-  update(ref(db,`katsushika/${prop}/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
+  update(ref(db,`katsushika/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
 };
 
 window.openPhoto=function(url){document.getElementById("photoModalImg").src=url;document.getElementById("photoModal").style.display="flex"};
