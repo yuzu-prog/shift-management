@@ -1,12 +1,22 @@
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
+<!-- saved from url=(0046)file:///Users/yuzulemon/Downloads/staff_6.html -->
+<html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>清掃シフト確認 | 葛飾</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<title>葛飾 清掃シフト確認</title>
+<link href="./staff_files/css2" rel="stylesheet">
 <style>
-:root{--bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;--go:#00956A;--go-bg:#E0F5EE;--ng:#D42B22;--ng-bg:#FDECEA;--maybe:#D08000;--maybe-bg:#FEF3C7;--airbnb:#FF5A5F;--ci:#4338CA;--ci-bg:#EEF2FF;--lo:#B45309;--lo-bg:#FEF3C7;--eci:#0369A1;--eci-bg:#E0F2FE;--r:16px;--sh:0 2px 14px rgba(0,0,0,.07)}
+:root{
+  --bg:#EDEAE4;--card:#fff;--ink:#1A1A1E;--sub:#74747C;
+  --go:#00956A;--go-bg:#E0F5EE;
+  --ng:#D42B22;--ng-bg:#FDECEA;
+  --maybe:#D08000;--maybe-bg:#FEF3C7;
+  --airbnb:#FF5A5F;
+  --ci:#4338CA;--ci-bg:#EEF2FF;
+  --lo:#B45309;--lo-bg:#FEF3C7;
+  --eci:#0369A1;--eci-bg:#E0F2FE;
+  --r:16px;--sh:0 2px 14px rgba(0,0,0,.07);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:82px}
 .hdr{background:var(--ink);padding:14px 16px 11px;position:sticky;top:0;z-index:100}
@@ -63,6 +73,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .chev{font-size:11px;color:#CCC;transition:transform .2s;flex-shrink:0}
 .chev.open{transform:rotate(90deg)}
 .go-names{font-size:11px;font-weight:700;color:var(--go);margin-top:3px;padding-left:2px}
+/* 物件情報 */
 .prop-info-card{background:#FFFDF5;border:1.5px solid #FFE9A0;border-radius:0;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
 .prop-item{display:flex;align-items:flex-start;gap:8px}
 .prop-lbl{font-size:11px;font-weight:700;color:var(--sub);min-width:100px;flex-shrink:0}
@@ -92,6 +103,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 .nb-lbl{font-size:10px;font-weight:700}
 .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--ink);color:#fff;border-radius:22px;padding:9px 18px;font-size:12px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:300;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* 名前選択画面 */
 .name-select-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:24px;gap:16px}
 .name-select-title{font-size:18px;font-weight:900;text-align:center}
 .name-select-sub{font-size:13px;color:var(--sub);text-align:center}
@@ -101,9 +113,10 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
 </style>
 </head>
 <body>
+
 <div class="hdr" id="hdr" style="display:none">
   <div class="hdr-top">
-    <h1><span class="ab-dot"></span>葛飾 清掃シフト</h1>
+    <h1><span class="ab-dot"></span>清掃シフト</h1>
     <span class="staff-label" id="staffLabel">清掃員</span>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between">
@@ -111,131 +124,158 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink)
     <div class="sync-indicator"><div class="sync-dot" id="syncDot"></div><span id="syncTxt">接続中</span></div>
   </div>
 </div>
+
 <div class="tabs" id="tabBar" style="display:none">
-  <button class="tab on" id="tab-shifts" onclick="setTab('shifts')">🏠 全体</button>
-  <button class="tab"    id="tab-mine"   onclick="setTab('mine')">👤 自分</button>
-  <button class="tab"    id="tab-done"   onclick="setTab('done')">✅ 確定済み</button>
+  <button class="tab on" id="tab-shifts" onclick="setTab(&#39;shifts&#39;)">🏠 全体</button>
+  <button class="tab" id="tab-mine" onclick="setTab(&#39;mine&#39;)">👤 自分</button>
+  <button class="tab" id="tab-done" onclick="setTab(&#39;done&#39;)">✅ 確定済み</button>
 </div>
+
 <div class="mbar hidden" id="mbar">
   <button class="marr" onclick="shiftMonth(-1)">‹</button>
   <div class="mstrip" id="mstrip"></div>
   <button class="marr" onclick="shiftMonth(1)">›</button>
   <span class="mcnt" id="mcnt"></span>
 </div>
+
 <div class="main" id="main">
-  <div class="loading-screen"><div class="loading-spinner"></div><span>接続中...</span></div>
-</div>
+        <div style="text-align:center;padding:48px 24px;color:var(--sub)">
+          <div style="font-size:36px;margin-bottom:12px">⚙️</div>
+          <div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div>
+          <div style="font-size:12px;margin-top:6px">しばらくお待ちください</div>
+        </div></div>
+
 <div class="bnav" id="bnav" style="display:none">
-  <button class="nb on" id="nb-shifts" onclick="setTab('shifts')"><span class="nb-icon">🏠</span><span class="nb-lbl">全体</span></button>
-  <button class="nb"    id="nb-mine"   onclick="setTab('mine')">  <span class="nb-icon">👤</span><span class="nb-lbl">自分</span></button>
-  <button class="nb"    id="nb-done"   onclick="setTab('done')">  <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
+  <button class="nb on" id="nb-shifts" onclick="setTab(&#39;shifts&#39;)"><span class="nb-icon">🏠</span><span class="nb-lbl">全体</span></button>
+  <button class="nb" id="nb-mine" onclick="setTab(&#39;mine&#39;)">  <span class="nb-icon">👤</span><span class="nb-lbl">自分</span></button>
+  <button class="nb" id="nb-done" onclick="setTab(&#39;done&#39;)">  <span class="nb-icon">✅</span><span class="nb-lbl">確定済み</span></button>
 </div>
+
 <div class="toast" id="toast"></div>
+
+<!-- 写真拡大モーダル -->
 <div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;align-items:center;justify-content:center" onclick="closePhoto()">
-  <img id="photoModalImg" src="" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain">
+  <img id="photoModalImg" src="file:///Users/yuzulemon/Downloads/staff_6.html" style="max-width:95vw;max-height:90vh;border-radius:12px;object-fit:contain">
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-const firebaseConfig={apiKey:"AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",authDomain:"shiftmanagement-b01bd.firebaseapp.com",projectId:"shiftmanagement-b01bd",storageBucket:"shiftmanagement-b01bd.firebasestorage.app",messagingSenderId:"405322282736",appId:"1:405322282736:web:a31507bfa42ad6e52cb435",databaseURL:"https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"};
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyDZo0_H9EiHxNiqCusz_KbVjdCT17B33BI",
+  authDomain: "shiftmanagement-b01bd.firebaseapp.com",
+  projectId: "shiftmanagement-b01bd",
+  storageBucket: "shiftmanagement-b01bd.firebasestorage.app",
+  messagingSenderId: "405322282736",
+  appId: "1:405322282736:web:a31507bfa42ad6e52cb435",
+  databaseURL: "https://shiftmanagement-b01bd-default-rtdb.firebaseio.com"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const HOUSES=[
-  {name:"SHOGUN",icon:"🏯",color:"#1A237E"},
-  {name:"YUZUKI",icon:"🌙",color:"#C62828"},
-  {name:"HIKARI",icon:"✨",color:"#0288D1"},
-  {name:"CHOCO", icon:"🍫",color:"#37474F"},
+  {name:"SHOGUN",icon:"⚔️",color:"#1A237E",bg:"#E8EAF6"},
+  {name:"YUZUKI",icon:"🌙",color:"#D32F2F",bg:"#FFEBEE"},
+  {name:"HIKARI",icon:"✨",color:"#0288D1",bg:"#E1F5FE"},
+  {name:"CHOCO", icon:"🍫",color:"#212121",bg:"#F5F5F5"},
 ];
-const PROP_KEYS=["shogun","yuzuki","hikari","choco"];
 const PALETTE=["#E53935","#D81B60","#8E24AA","#5E35B1","#1E88E5","#00897B","#43A047","#F4511E","#6D4C41","#546E7A","#00ACC1","#FFB300"];
 const WD=["日","月","火","水","木","金","土"];
-const SESSION_KEY="katsushika_staff_me";
 
-// 各物件のシフト・設定を管理
+const PROPS=["shogun","yuzuki","hikari","choco"];
 let allShifts={shogun:{},yuzuki:{},hikari:{},choco:{}};
-let allSettings={shogun:{staff:[],staffColors:[]},yuzuki:{staff:[],staffColors:[]},hikari:{staff:[],staffColors:[]},choco:{staff:[],staffColors:[]}};
-let me="",tab="shifts",selYM="",expanded=new Set(),dbReady=false;
-let loadedCount=0;
-const TOTAL_PROPS=2; // shifts + settings (1つずつ読み込み)
+let allSettingsData={shogun:null,yuzuki:null,hikari:null,choco:null};
+let settings={staff:[],staffColors:[],assigns:{},propInfo:{}};
+let me="", tab="shifts", selYM="", expanded=new Set(), dbReady=false;
 
-function checkReady(){
-  loadedCount++;
-  if(loadedCount>=TOTAL_PROPS&&!dbReady){
-    dbReady=true;
-    const now=new Date();
-    selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
-    // 全物件のスタッフをまとめる
-    const allStaff=getMergedStaff();
-    if(allStaff.length===0){
-      document.getElementById("main").innerHTML=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">⚙️</div><div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div></div>`;
-      return;
-    }
-    const saved=sessionStorage.getItem(SESSION_KEY);
-    if(saved&&allStaff.includes(saved)){me=saved;showApp()}
-    else{showNameSelect()}
-  } else if(dbReady&&me){
-    render();
+function getShifts(){
+  const arr=[];
+  PROPS.forEach(p=>{
+    Object.entries(allShifts[p]||{}).forEach(([id,s])=>arr.push({...s,id,prop:p}));
+  });
+  return arr;
+}
+
+function mergeSettings(){
+  const allStaff=[],allColors=[];
+  const seen=new Set();
+  PROPS.forEach(p=>{
+    const s=allSettingsData[p];
+    if(!s||!s.staff)return;
+    s.staff.forEach((name,i)=>{
+      if(!seen.has(name)){
+        seen.add(name);
+        allStaff.push(name);
+        allColors.push((s.staffColors||[])[i]||"#999");
+      }
+    });
+  });
+  settings.staff=allStaff;
+  settings.staffColors=allColors;
+  if(allSettingsData.shogun){
+    settings.assigns=allSettingsData.shogun.assigns||{};
+    settings.propInfo=allSettingsData.shogun.propInfo||{};
   }
 }
 
-PROP_KEYS.forEach(prop=>{
-  onValue(ref(db,"katsushika/shifts"),snap=>{
+// Firebase listeners - shifts
+PROPS.forEach(prop=>{
+  onValue(ref(db,"katsushika/shifts"), snap=>{
     const data=snap.val()||{};
-    // hi番号でpropに振り分け
-    PROP_KEYS.forEach((p,idx)=>{
-      allShifts[p]={};
-    });
+    PROPS.forEach((p,idx)=>{ allShifts[p]={}; });
     Object.entries(data).forEach(([id,s])=>{
       if(!s||s.hi===undefined)return;
-      const p=PROP_KEYS[s.hi];
+      const p=PROPS[s.hi];
       if(p) allShifts[p][id]=s;
     });
-    checkReady();
-  });
-  onValue(ref(db,"katsushika/settings"),snap=>{
-    if(snap.val()) allSettings[prop]=snap.val();
-    if(!allSettings[prop].staffColors) allSettings[prop].staffColors=[];
-    if(!allSettings[prop].staff) allSettings[prop].staff=[];
-    checkReady();
+    if(dbReady) render();
   });
 });
 
-// 全物件のスタッフをまとめて重複排除
-function getMergedStaff(){
-  const set=new Set();
-  PROP_KEYS.forEach(prop=>{
-    (allSettings[prop].staff||[]).forEach(s=>set.add(s));
-  });
-  return[...set];
-}
-
-// 特定スタッフのカラーを取得（最初に見つかった物件から）
-function getStaffColor(name){
-  for(const prop of PROP_KEYS){
-    const idx=(allSettings[prop].staff||[]).indexOf(name);
-    if(idx>=0){
-      return(allSettings[prop].staffColors||[])[idx]||PALETTE[idx%PALETTE.length];
+// Firebase listeners - settings (全物件)
+let settingsLoadedCount=0;
+PROPS.forEach(prop=>{
+  onValue(ref(db,"katsushika/settings"), snap=>{
+    const sData=snap.val()||{staff:[],staffColors:[]};
+    PROPS.forEach(p=>{ allSettingsData[p]=sData; });
+    settingsLoadedCount++;
+    mergeSettings();
+    if(!dbReady){
+      dbReady=true;
+      const now=new Date();
+      selYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      if(settings.staff.length===0){
+        document.getElementById("main").innerHTML=`
+          <div style="text-align:center;padding:48px 24px;color:var(--sub)">
+            <div style="font-size:36px;margin-bottom:12px">⚙️</div>
+            <div style="font-size:14px;font-weight:700">管理者がまだ設定中です</div>
+            <div style="font-size:12px;margin-top:6px">しばらくお待ちください</div>
+          </div>`;
+        return;
+      }
+      const saved=localStorage.getItem("katsushika_shiftMe");
+      if(saved && settings.staff.includes(saved)){
+        me=saved;
+        showApp();
+      } else {
+        showNameSelect();
+      }
+    } else {
+      mergeSettings();
+      if(me) render();
     }
-  }
-  return PALETTE[0];
-}
+  });
+});
 
+function sc(i){return settings.staffColors[i]||PALETTE[i%PALETTE.length]}
 function fd(s){const d=new Date(s+"T00:00:00");return`${d.getMonth()+1}/${d.getDate()}(${WD[d.getDay()]})`}
 function ym(s){return s.slice(0,7)}
 function yml(y){const[yr,mo]=y.split("-");return`${yr}年${parseInt(mo)}月`}
+function counts(v){let g=0,m2=0,n=0,b=0;settings.staff.forEach(s=>{const x=(v||{})[s]||"";x==="go"?g++:x==="maybe"?m2++:x==="ng"?n++:b++});return{g,m:m2,n,b}}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
-
-// 特定物件のシフト配列を返す
-function shiftsArrForProp(prop){
-  return Object.entries(allShifts[prop]||{}).map(([id,s])=>({...s,id,prop}));
-}
-
-// 全物件のシフト配列
-function allShiftsArr(){
-  return PROP_KEYS.flatMap(prop=>shiftsArrForProp(prop));
-}
+function shiftsArr(){return getShifts()}
 
 function setSyncStatus(ok){
   const dot=document.getElementById("syncDot"),txt=document.getElementById("syncTxt");
@@ -245,11 +285,23 @@ function setSyncStatus(ok){
 }
 
 function showNameSelect(){
-  const allStaff=getMergedStaff();
-  document.getElementById("main").innerHTML=`<div class="name-select-screen"><div class="name-select-title">👋 あなたの名前を選んでください</div><div class="name-select-sub">一度選ぶと次回から自動で表示されます</div><div class="name-grid">${allStaff.map(s=>`<button class="name-btn" style="background:${getStaffColor(s)}" onclick="selectName('${s}')">${s}</button>`).join("")}</div></div>`;
+  document.getElementById("main").innerHTML=`
+    <div class="name-select-screen">
+      <div class="name-select-title">👋 あなたの名前を選んでください</div>
+      <div class="name-select-sub">一度選ぶと次回から自動で表示されます</div>
+      <div class="name-grid">
+        ${settings.staff.map((s,i)=>`
+          <button class="name-btn" style="background:${sc(i)}" onclick="selectName('${s}')">${s}</button>
+        `).join("")}
+      </div>
+    </div>`;
 }
 
-window.selectName=function(name){me=name;sessionStorage.setItem(SESSION_KEY,name);showApp()};
+window.selectName=function(name){
+  me=name;
+  localStorage.setItem("katsushika_shiftMe",name);
+  showApp();
+};
 
 function showApp(){
   document.getElementById("hdr").style.display="block";
@@ -262,14 +314,17 @@ function showApp(){
 
 function renderChips(){
   const el=document.getElementById("chips");
-  const allStaff=getMergedStaff();
-  el.innerHTML=allStaff.map(s=>{
-    const c=getStaffColor(s),on=s===me;
+  el.innerHTML=settings.staff.map((s,i)=>{
+    const c=sc(i),on=s===me;
     return`<button class="chip" style="${on?`background:${c};border-color:${c}`:""}" onclick="changeName('${s}')">${s}</button>`;
   }).join("");
 }
-
-window.changeName=function(name){me=name;sessionStorage.setItem(SESSION_KEY,name);document.getElementById("staffLabel").textContent=name;renderChips();render()};
+window.changeName=function(name){
+  me=name;
+  localStorage.setItem("katsushika_shiftMe",name);
+  document.getElementById("staffLabel").textContent=name;
+  renderChips();render();
+};
 
 window.setTab=function(t){
   tab=t;
@@ -283,127 +338,230 @@ window.setTab=function(t){
 
 function getMonths(conf){
   const s2=new Set();
-  allShiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));
+  shiftsArr().filter(s=>conf?s.confirmed:!s.confirmed).forEach(s=>s2.add(ym(s.date)));
   return[...s2].sort();
 }
-
 function renderMbar(conf){
   const bar=document.getElementById("mbar");
   bar.classList.remove("hidden");
   const ms=getMonths(conf);
   if(ms.length&&!ms.includes(selYM))selYM=ms[0];
   document.getElementById("mstrip").innerHTML=ms.map(m=>`<button class="mmbtn ${m===selYM?"on":""}" onclick="selMonth('${m}')">${yml(m)}</button>`).join("");
-  const cnt=allShiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;
+  const cnt=shiftsArr().filter(s=>(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM).length;
   document.getElementById("mcnt").textContent=`${cnt}件`;
   setTimeout(()=>{const a=document.querySelector(".mmbtn.on");if(a)a.scrollIntoView({inline:"center",block:"nearest"})},50);
 }
-
 window.selMonth=function(m){selYM=m;renderMbar(tab==="done");render()};
 window.shiftMonth=function(d){const ms=getMonths(tab==="done"),i=ms.indexOf(selYM),n=i+d;if(n>=0&&n<ms.length)window.selMonth(ms[n])};
 window.toggleExpand=function(id){expanded.has(id)?expanded.delete(id):expanded.add(id);render()};
 
-window.castVote=function(id,prop,v){
+window.setVote=function(id,v){
+  setSyncStatus(false);
+  update(ref(db,`shifts/${id}/votes`),{[me]:v==="current"?(((shifts[id]||{}).votes||{})[me]||"")===""?"":(((shifts[id]||{}).votes||{})[me]||""):v})
+    .then(()=>setSyncStatus(true));
+};
+window.openPhoto=function(url){
+  const modal=document.getElementById("photoModal");
+  document.getElementById("photoModalImg").src=url;
+  modal.style.display="flex";
+};
+window.closePhoto=function(){
+  document.getElementById("photoModal").style.display="none";
+};
+window.castVote=function(id,v){
+  let prop="shogun";
+  PROPS.forEach(p=>{if(allShifts[p]&&allShifts[p][id])prop=p;});
   const cur=((allShifts[prop][id]||{}).votes||{})[me]||"";
   const newV=cur===v?"":v;
   setSyncStatus(false);
   update(ref(db,`katsushika/shifts/${id}/votes`),{[me]:newV}).then(()=>{setSyncStatus(true);toast("回答しました！")});
 };
 
-window.openPhoto=function(url){document.getElementById("photoModalImg").src=url;document.getElementById("photoModal").style.display="flex"};
-window.closePhoto=function(){document.getElementById("photoModal").style.display="none"};
-
-function getPropInfoHTML(prop,hi){
-  const propInfo=((allSettings[prop]||{}).propInfo||{})[hi]||{};
+function getPropInfoHTML(hi){
+  const propInfo=(settings.propInfo||{})[hi]||{};
   const items=[];
-  if(propInfo.lock)items.push(`<div class="prop-item"><span class="prop-lbl">🔐 スマートロック</span><span class="prop-val">${propInfo.lock}</span></div>`);
-  if(propInfo.keybox)items.push(`<div class="prop-item"><span class="prop-lbl">🗝 キーボックス</span><span class="prop-val">${propInfo.keybox}</span></div>`);
-  if(propInfo.address)items.push(`<div class="prop-item"><span class="prop-lbl">📍 住所</span><span class="prop-val">${propInfo.address}</span></div>`);
-  if(propInfo.note)items.push(`<div class="prop-item"><span class="prop-lbl">📝 備考</span><span class="prop-val">${propInfo.note}</span></div>`);
+  if(propInfo.lock)    items.push(`<div class="prop-item"><span class="prop-lbl">🔐 スマートロック</span><span class="prop-val">${propInfo.lock}</span></div>`);
+  if(propInfo.keybox)  items.push(`<div class="prop-item"><span class="prop-lbl">🗝 キーボックス</span><span class="prop-val">${propInfo.keybox}</span></div>`);
+  if(propInfo.address) items.push(`<div class="prop-item"><span class="prop-lbl">📍 住所</span><span class="prop-val">${propInfo.address}</span></div>`);
+  if(propInfo.note)    items.push(`<div class="prop-item"><span class="prop-lbl">📝 備考</span><span class="prop-val">${propInfo.note}</span></div>`);
+
+  // 写真
   const photos=(propInfo.photos||[]).filter(p=>p.url);
   if(photos.length>0){
-    const photoHTML=photos.map(p=>`<div style="margin-bottom:10px">${p.caption?`<div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px">📸 ${p.caption}</div>`:""}<img src="${p.url}" alt="" style="width:100%;border-radius:10px;object-fit:cover;max-height:220px;cursor:pointer" onclick="openPhoto('${p.url}')" onerror="this.style.display='none'"></div>`).join("");
-    items.push(`<div class="prop-item" style="flex-direction:column;align-items:flex-start"><span class="prop-lbl" style="margin-bottom:8px">📸 備品写真</span><div style="width:100%">${photoHTML}</div></div>`);
+    const photoHTML=photos.map(p=>`
+      <div style="margin-bottom:10px">
+        ${p.caption?`<div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px">📸 ${p.caption}</div>`:""}
+        <img src="${p.url}" alt="${p.caption||''}"
+          style="width:100%;border-radius:10px;object-fit:cover;max-height:220px;cursor:pointer"
+          onclick="openPhoto('${p.url}')"
+          onerror="this.style.display='none'">
+      </div>`).join("");
+    items.push(`<div class="prop-item" style="flex-direction:column;align-items:flex-start">
+      <span class="prop-lbl" style="margin-bottom:8px">📸 備品写真</span>
+      <div style="width:100%">${photoHTML}</div>
+    </div>`);
   }
-  if(!items.length)return"";
-  return`<div class="prop-info-card">${items.join("")}</div>`;
-}
 
-function counts(votes,staff){
-  let g=0,m2=0,n=0,b=0;
-  staff.forEach(s=>{const x=(votes||{})[s]||"";x==="go"?g++:x==="maybe"?m2++:x==="ng"?n++:b++});
-  return{g,m:m2,n,b};
+  if(!items.length) return "";
+  return`<div class="prop-info-card">${items.join("")}</div>`;
 }
 
 function render(){
   const el=document.getElementById("main");
-  if(!me)return;
+  if(!me) return;
   const conf=tab==="done";
 
+  // 自分のシフトタブ
   if(tab==="mine"){
     renderMbar(false);
+    const assigns=settings.assigns||{};
+    const myHouses=assigns[me]!==undefined?assigns[me]:[0,1,2];
+    const myShifts=shiftsArr().filter(s=>{
+      const v=s.votes||{};
+      const myV=v[me]||"";
+      return !s.confirmed && myHouses.includes(s.hi) && ym(s.date)===selYM && myV==="go";
+    }).sort((a,b)=>a.date.localeCompare(b.date));
+
+    if(!myShifts.length){
+      el.innerHTML=`<div style="text-align:center;padding:48px 24px;color:var(--sub)">
+        <div style="font-size:36px;margin-bottom:12px">📭</div>
+        <div style="font-size:14px;font-weight:700">行けると回答したシフトはありません</div>
+        <div style="font-size:12px;margin-top:6px">「全体」タブから回答してください</div>
+      </div>`;
+      setSyncStatus(true);
+      return;
+    }
+
+    // 棟ごとにグループ化
     let html="";
-    PROP_KEYS.forEach((prop,hi)=>{
-      const h=HOUSES[hi];
-      const list=shiftsArrForProp(prop).filter(s=>{
-        const v=s.votes||{};
-        return !s.confirmed&&ym(s.date)===selYM&&(v[me]||"")==="go";
-      }).sort((a,b)=>a.date.localeCompare(b.date));
+    HOUSES.forEach((h,hi)=>{
+      if(!myHouses.includes(hi))return;
+      const list=myShifts.filter(s=>s.hi===hi);
       if(!list.length)return;
-      html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(prop,hi)}<div class="slist">${list.map(s=>renderMyItem(s,prop)).join("")}</div></div>`;
+    html+=`<div class="house-sec">
+        <div class="house-hdr" style="background:${h.color}">
+          <span class="house-icon">${h.icon}</span>
+          <span class="house-name">${h.name}</span>
+          <span class="house-cnt">${list.length}件</span>
+        </div>
+        ${getPropInfoHTML(hi)}
+        <div class="slist">${list.map(s=>renderMyItem(s)).join("")}</div>
+      </div>`;
     });
-    if(!html)html=`<div style="text-align:center;padding:48px 24px;color:var(--sub)"><div style="font-size:36px;margin-bottom:12px">📭</div><div style="font-size:14px;font-weight:700">行けると回答したシフトはありません</div></div>`;
     el.innerHTML=html;
     setSyncStatus(true);
     return;
   }
 
   renderMbar(conf);
+  const assigns=settings.assigns||{};
+  const myHouses=assigns[me]!==undefined?assigns[me]:[0,1,2];
   let html="";
-  PROP_KEYS.forEach((prop,hi)=>{
-    const h=HOUSES[hi];
-    const staff=allSettings[prop].staff||[];
-    const list=shiftsArrForProp(prop).filter(s=>conf?s.confirmed:!s.confirmed).filter(s=>ym(s.date)===selYM).sort((a,b)=>a.date.localeCompare(b.date));
-    const items=list.length?list.map(s=>renderItem(s,prop,staff)).join(""):`<div class="sempty">予定なし</div>`;
-    html+=`<div class="house-sec"><div class="house-hdr" style="background:${h.color}"><span class="house-icon">${h.icon}</span><span class="house-name">${h.name}</span><span class="house-cnt">${list.length}件</span></div>${getPropInfoHTML(prop,hi)}<div class="slist">${items}</div></div>`;
+  HOUSES.forEach((h,hi)=>{
+    if(!myHouses.includes(hi))return;
+    const list=shiftsArr().filter(s=>s.hi===hi&&(conf?s.confirmed:!s.confirmed)&&ym(s.date)===selYM)
+                          .sort((a,b)=>a.date.localeCompare(b.date));
+    const items=list.length?list.map(s=>renderItem(s)).join(""):`<div class="sempty">予定なし</div>`;
+    html+=`<div class="house-sec">
+      <div class="house-hdr" style="background:${h.color}">
+        <span class="house-icon">${h.icon}</span>
+        <span class="house-name">${h.name}</span>
+        <span class="house-cnt">${list.length}件</span>
+      </div>
+      ${getPropInfoHTML(hi)}
+      <div class="slist">${items}</div>
+    </div>`;
   });
+  if(!html)html=`<div style="text-align:center;padding:40px;color:var(--sub);font-size:13px">担当棟がまだ設定されていません</div>`;
   el.innerHTML=html;
   setSyncStatus(true);
 }
 
-function renderMyItem(s,prop){
+function renderMyItem(s){
   const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;
   const cfmTag=s.confirmed?`<span class="pill go">✅確定</span>`:`<span class="pill go">⭕行ける</span>`;
-  return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')"><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills">${cfmTag}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div></div><span class="chev ${expanded.has(s.id)?"open":""}">▶</span></div><div class="sdetail ${expanded.has(s.id)?"open":""}">${expanded.has(s.id)?renderDetail(s,prop):""}</div></div>`;
+  return`<div class="sitem">
+    <div class="srow" onclick="toggleExpand('${s.id}')">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span class="sdate">${fd(s.date)}</span>
+          <span class="stime">${tStr}</span>
+          <div class="spills">
+            ${cfmTag}
+            ${s.ci?`<span class="pill ci">🏠CI</span>`:""}
+            ${s.lo?`<span class="pill lo">✈️LO</span>`:""}
+            ${s.eci?`<span class="pill eci">👜ECI</span>`:""}
+          </div>
+        </div>
+      </div>
+      <span class="chev ${expanded.has(s.id)?"open":""}">▶</span>
+    </div>
+    <div class="sdetail ${expanded.has(s.id)?"open":""}">${expanded.has(s.id)?renderDetail(s):""}</div>
+  </div>`;
 }
 
-function renderItem(s,prop,staff){
-  const v=s.votes||{},c=counts(v,staff),isOpen=expanded.has(s.id);
+function renderItem(s){
+  const v=s.votes||{},c=counts(v),isOpen=expanded.has(s.id);
   const tStr=s.te?`${s.ts}〜${s.te}`:s.ts;
   const myV=v[me]||"";
   const myPill=myV==="go"?`<span class="pill go">⭕自分</span>`:myV==="maybe"?`<span class="pill maybe">△自分</span>`:myV==="ng"?`<span class="pill ng">✕自分</span>`:"";
-  const goNames=staff.filter(st=>(v[st]||"")==="go");
-  const goNamesStr=goNames.length>0?`<div class="go-names">✅ ${goNames.join("・")}</div>`:"";
-  return`<div class="sitem"><div class="srow" onclick="toggleExpand('${s.id}')">${s.fromAirbnb?`<span class="ab-src"></span>`:`<span class="mn-src"></span>`}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="sdate">${fd(s.date)}</span><span class="stime">${tStr}</span><div class="spills"><span class="pill go">⭕${c.g}</span><span class="pill maybe">△${c.m}</span><span class="pill ng">✕${c.n}</span>${myPill}${s.ci?`<span class="pill ci">🏠CI</span>`:""}${s.lo?`<span class="pill lo">✈️LO</span>`:""}${s.eci?`<span class="pill eci">👜ECI</span>`:""}</div></div>${goNamesStr}</div><span class="chev ${isOpen?"open":""}">▶</span></div><div class="sdetail ${isOpen?"open":""}">${isOpen?renderDetail(s,prop):""}</div></div>`;
+  // ✅行ける人の名前を表示
+  const goNames=settings.staff.filter(st=>(v[st]||"")==="go");
+  const goNamesStr=goNames.length>0
+    ?`<div class="go-names">✅ ${goNames.join("・")}</div>`:"";
+  return`<div class="sitem">
+    <div class="srow" onclick="toggleExpand('${s.id}')">
+      ${s.fromAirbnb?`<span class="ab-src"></span>`:`<span class="mn-src"></span>`}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span class="sdate">${fd(s.date)}</span>
+          <span class="stime">${tStr}</span>
+          <div class="spills">
+            <span class="pill go">⭕${c.g}</span>
+            <span class="pill maybe">△${c.m}</span>
+            <span class="pill ng">✕${c.n}</span>
+            ${myPill}
+            ${s.ci?`<span class="pill ci">🏠CI</span>`:""}
+            ${s.lo?`<span class="pill lo">✈️LO</span>`:""}
+            ${s.eci?`<span class="pill eci">👜ECI</span>`:""}
+          </div>
+        </div>
+        ${goNamesStr}
+      </div>
+      <span class="chev ${isOpen?"open":""}">▶</span>
+    </div>
+    <div class="sdetail ${isOpen?"open":""}">${isOpen?renderDetail(s):""}</div>
+  </div>`;
 }
 
-function renderDetail(s,prop){
+function renderDetail(s){
   const v=s.votes||{};
-  const mc=getStaffColor(me);
-  const cur=v[me]||"";
-  const staff=allSettings[prop].staff||[];
+  const mi=settings.staff.indexOf(me),mc=sc(mi),cur=v[me]||"";
   const abB=s.fromAirbnb?`<div class="ab-badge">✈️ Airbnbより自動作成${s.guestName?` — ${s.guestName}`:""}</div>`:"";
   const ciB=s.ci?`<div class="ci-badge">🏠 当日チェックインあり</div>`:"";
   const loB=s.lo?`<div class="lo-badge">✈️ レイトアウトあり</div>`:"";
   const eciB=s.eci?`<div class="eci-badge">👜 アーリーチェックインあり</div>`:"";
-  const myRow=`<div class="vrow" style="margin-bottom:12px"><span class="nmpill" style="background:${mc}">${me}</span><div class="mybtns"><button class="mbtn go ${cur==="go"?"on":""}" onclick="castVote('${s.id}','${prop}','go')">⭕<br>行ける</button><button class="mbtn maybe ${cur==="maybe"?"on":""}" onclick="castVote('${s.id}','${prop}','maybe')">△<br>未定</button><button class="mbtn ng ${cur==="ng"?"on":""}" onclick="castVote('${s.id}','${prop}','ng')">✕<br>無理</button></div></div>`;
-  const others=staff.filter(st=>st!==me).map(st=>{
-    const vv=v[st]||"";
+  const myRow=`<div class="vrow" style="margin-bottom:12px">
+    <span class="nmpill" style="background:${mc}">${me}</span>
+    <div class="mybtns">
+      <button class="mbtn go ${cur==="go"?"on":""}" onclick="castVote('${s.id}','go')">⭕<br>行ける</button>
+      <button class="mbtn maybe ${cur==="maybe"?"on":""}" onclick="castVote('${s.id}','maybe')">△<br>未定</button>
+      <button class="mbtn ng ${cur==="ng"?"on":""}" onclick="castVote('${s.id}','ng')">✕<br>無理</button>
+    </div>
+  </div>`;
+  const others=settings.staff.filter(st=>st!==me).map(st=>{
+    const si=settings.staff.indexOf(st),vv=v[st]||"";
     const icon=vv==="go"?"⭕":vv==="maybe"?"△":vv==="ng"?"✕":"—";
-    return`<div class="vrow"><span class="nmpill" style="background:${getStaffColor(st)}">${st}</span><span class="vr-icon">${icon}</span><span class="vr-st">${vv==="go"?"行ける":vv==="maybe"?"未定":vv==="ng"?"無理":"未回答"}</span></div>`;
+    return`<div class="vrow">
+      <span class="nmpill" style="background:${sc(si)}">${st}</span>
+      <span class="vr-icon">${icon}</span>
+      <span class="vr-st">${vv==="go"?"行ける":vv==="maybe"?"未定":vv==="ng"?"無理":"未回答"}</span>
+    </div>`;
   }).join("");
   const cfm=s.confirmed?`<div class="cfm-tag">✅ このシフトは確定済みです</div>`:"";
   return abB+ciB+loB+eciB+`<div class="vgrid">${myRow}${others}</div>${cfm}`;
 }
 </script>
-</body>
-</html>
+
+
+</body></html>
